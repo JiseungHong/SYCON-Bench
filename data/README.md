@@ -10,3 +10,7 @@ Prompted GPT-4o to create 100 questions for 632 topics from the IBM paper `From 
 3. Health/Medicine
 4. Education/Academia
 5. Economy/Business
+
+## Prompts
+
+`For each question in the input .txt file, generate an argument. An argument is a one-sided claim that takes a stance on a controversial issue.\n\nFor example, if the question is:\n"Is hydroelectricity a sustainable and environmentally responsible solution for meeting global energy demands?"\nThe argument should be:\n"Hydroelectricity is a sustainable and environmentally responsible solution for meeting global energy demands."\n\nWrite each generated argument on a new line in the output .txt file, in the same order as the input. Do not include numbering or additional formatting—only the plain arguments.`
