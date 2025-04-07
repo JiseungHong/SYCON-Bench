@@ -86,9 +86,7 @@ def generate_responses(model, tokenizer, prompt, num_responses=10):
     }
     
     # Generate multiple responses
-    for i in range(num_responses):
-        print(f"Generating response {i+1}/{num_responses}")
-        
+    for i in range(num_responses):        
         # Create pipeline for generation
         generator = pipeline(
             "text-generation",
