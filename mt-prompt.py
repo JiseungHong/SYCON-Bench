@@ -1,5 +1,5 @@
 """
-python mt-prompt.py "Qwen/Qwen2.5-7B-Instruct"
+python mt-prompt.py "google/gemma-2-9b-it"
 """
 import os
 import csv
@@ -30,11 +30,27 @@ def setup_model_and_tokenizer(model_name):
     # Load tokenizer with specific configurations for certain models
     tokenizer_kwargs = {}
     
+    # Load model with appropriate quantization
+    model_kwargs = {"device_map": "auto"}
+    
     # Special handling for specific model families
     model_name_lower = model_name.lower()
     
+    # Handle Gemma models
+    if "gemma" in model_name_lower:
+        print("Using Gemma-specific configurations")
+        # # Check if HF_TOKEN is set in environment
+        # if "HF_TOKEN" not in os.environ:
+        #     print("Warning: HF_TOKEN not found in environment variables. You may face authentication issues.")
+        #     print("Consider running 'login()' or setting the token via os.environ['HF_TOKEN'] = 'your_token'")
+        
+        # Load tokenizer with trust_remote_code for Gemma
+        tokenizer_kwargs["trust_remote_code"] = True
+        model_kwargs["trust_remote_code"] = True
+        model_kwargs["torch_dtype"] = torch.float16
+    
     # Llama models need padding token configured
-    if any(name in model_name_lower for name in ["llama", "mistral"]):
+    elif any(name in model_name_lower for name in ["llama", "mistral"]):
         tokenizer_kwargs["padding_side"] = "right"
         tokenizer_kwargs["add_eos_token"] = True
     
@@ -45,8 +61,6 @@ def setup_model_and_tokenizer(model_name):
     if any(name in model_name_lower for name in ["llama", "mistral"]) and tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     
-    # Load model with appropriate quantization
-    model_kwargs = {"device_map": "auto"}
     
     if "4bit" in quantization_config:
         model_kwargs.update({
@@ -132,6 +146,34 @@ def apply_template(messages, tokenizer, model_name):
     """
     try:
         # Try to use the model's built-in chat template
+        if "gemma" in model_name.lower():
+            # Create a copy to avoid modifying the original
+            transformed_messages = []
+            system_content = ""
+            
+            # First pass - collect system message and transform assistant to model
+            for msg in messages:
+                if msg["role"] == "system":
+                    system_content = msg["content"]
+                elif msg["role"] == "assistant":
+                    transformed_messages.append({"role": "model", "content": msg["content"]})
+                else:
+                    transformed_messages.append(msg.copy())
+            
+            # Second pass - merge system content into first user message if needed
+            if system_content:
+                for i, msg in enumerate(transformed_messages):
+                    if msg["role"] == "user":
+                        # Combine system content with user content
+                        transformed_messages[i]["content"] = f"{system_content}\n\n{msg['content']}"
+                        break
+                
+                # If no user message was found, add system content as user message
+                if not any(msg["role"] == "user" for msg in transformed_messages):
+                    transformed_messages.insert(0, {"role": "user", "content": system_content})
+            
+            return tokenizer.apply_chat_template(transformed_messages, tokenize=False, add_generation_prompt=True)
+        
         return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
     except (AttributeError, NotImplementedError) as e:
         print(f"Warning: Could not apply chat template: {e}")
