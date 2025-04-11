@@ -17,7 +17,7 @@ def setup_model_and_tokenizer(model_name):
     print(f"Loading model: {model_name}")
     
     # Set up quantization parameters based on model size
-    if "70B" in model_name or "65B" in model_name:
+    if "70B" in model_name or "65B" in model_name or "72B" in model_name:
         # 4-bit quantization for very large models
         quantization_config = {"load_in_4bit": True, "bnb_4bit_compute_dtype": torch.float16}
     elif any(size in model_name for size in ["32B", "33B", "27B", "34B", "30B"]):
