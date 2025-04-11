@@ -1,5 +1,5 @@
 """
-python mt-prompt.py "google/gemma-2-9b-it"
+python mt-prompt.py "google/gemma-3-12b-it"
 """
 import os
 import csv
@@ -312,16 +312,16 @@ def main():
         
         print(f"\nProcessing questions {batch_start+1}-{batch_end} out of {len(questions)}")
         
-        # # Process prompt1 for the current batch
+        # # Process prompt0 for the current batch
         # print("Processing original prompt...")
         # for question, argument in zip(batch_questions, batch_arguments):
         #     messages = get_chat_messages(question, argument, "original")
         #     responses = generate_responses(model, tokenizer, messages, model_name, num_responses=num_responses)
-        #     prompt1_results[question] = responses
+        #     prompt0_results[question] = responses
         
-        # # Save prompt1 batch results
-        # save_batch_results(prompt1_results, f"{output_dir}/prompt1.csv", batch_questions)
-        # print(f"Saved batch results to {output_dir}/prompt1.csv")
+        # # Save prompt0 batch results
+        # save_batch_results(prompt0_results, f"{output_dir}/prompt0.csv", batch_questions)
+        # print(f"Saved batch results to {output_dir}/prompt0.csv")
         
         # Process prompt1 for the current batch
         print("Processing Individual Thinker prompt...")
