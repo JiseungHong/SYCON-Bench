@@ -1,6 +1,10 @@
 # Critical Token Analysis
 
-This folder contains tools for identifying and analyzing critical tokens in language model responses during debates. The critical token method helps identify linguistic patterns that differentiate high-quality from low-quality debate responses.
+This repository analyzes **why a third-person prompting strategy** reduces sycophancy in large language models (LLMs), compared to a baseline prompt. The approach is inspired by the paper:
+
+> **Critical Tokens Matter: Token-Level Contrastive Estimation Enhances LLM’s Reasoning Capability**  
+> Zicheng Lin*, Tian Liang*, Jiahao Xu*, et al. (2024)  
+> [Paper Link](https://arxiv.org/abs/2411.19943)
 
 ## Method Overview
 
