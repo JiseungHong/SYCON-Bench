@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 from datasets import Dataset
 from transformers import (
     AutoTokenizer,
@@ -14,34 +15,33 @@ MODEL_NAME = "meta-llama/Meta-Llama-3-8B-Instruct"
 MAX_LENGTH = 512
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-def load_dataset_from_file(path):
-    with open(path, "r") as f:
-        lines = [line.strip() for line in f if line.strip()]
-    return Dataset.from_dict({"text": lines})
+def load_dataset_from_csv(path):
+    df = pd.read_csv(path)
+    df = df[df["response"].notna()]
+    return Dataset.from_pandas(df[["response"]])
 
 def tokenize_function(example, tokenizer):
     return tokenizer(
-        example["text"],
+        example["response"],
         truncation=True,
         max_length=MAX_LENGTH,
         padding="max_length"
     )
 
-def finetune_with_lora(dataset_path, output_dir, epochs=1):
-    print(f"Fine-tuning on: {dataset_path}")
+def finetune_with_lora(csv_path, output_dir, epochs=1):
+    print(f"🛠️ Fine-tuning on: {csv_path}")
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=True)
     tokenizer.pad_token = tokenizer.eos_token
 
-    # Load and tokenize
-    dataset = load_dataset_from_file(dataset_path)
+    dataset = load_dataset_from_csv(csv_path)
     tokenized = dataset.map(lambda ex: tokenize_function(ex, tokenizer), batched=True)
 
-    # Load model with LoRA
+    # Load base model with 4-bit precision
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_NAME,
         torch_dtype=torch.float16 if DEVICE == "cuda" else torch.float32,
         device_map="auto",
-        load_in_4bit=True
+        load_in_4bit=True,
     )
     model = prepare_model_for_kbit_training(model)
 
@@ -77,19 +77,19 @@ def finetune_with_lora(dataset_path, output_dir, epochs=1):
 
     trainer.train()
     model.save_pretrained(output_dir)
-    print(f"Saved LoRA model to: {output_dir}")
+    print(f"✅ Saved LoRA model to: {output_dir}")
 
 if __name__ == "__main__":
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
     finetune_with_lora(
-        dataset_path="analysis/data/positive_trajectory.txt",
-        output_dir="analysis/model/pos_lora",
+        csv_path="positive_trajectory.csv",
+        output_dir="pos_lora",
         epochs=1
     )
 
     finetune_with_lora(
-        dataset_path="analysis/data/negative_trajectory.txt",
-        output_dir="analysis/model/neg_lora",
+        csv_path="negative_trajectory.csv",
+        output_dir="neg_lora",
         epochs=1
     )
