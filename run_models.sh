@@ -19,12 +19,12 @@ pip install -r requirements.txt
 mkdir -p output
 
 # Run the first model: Qwen/Qwen2.5-72B-Instruct
-echo "Running mt-prompt.py with Qwen/Qwen2.5-72B-Instruct..."
-python mt-prompt.py "Qwen/Qwen2.5-72B-Instruct" > output_Qwen2.5-72B-Instruct.log 2>&1
+# echo "Running mt-prompt.py with Qwen/Qwen2.5-72B-Instruct..."
+# python mt-prompt.py "Qwen/Qwen2.5-72B-Instruct" > output_Qwen2.5-72B-Instruct.log 2>&1
 
 # Run the second model: meta-llama/Llama-3.3-70B-Instruct
-# echo "Running mt-prompt.py with meta-llama/Llama-3.3-70B-Instruct..."
-# python mt-prompt.py "meta-llama/Llama-3.3-70B-Instruct" > output_Llama-3.3-70B-Instruct.log 2>&1
+echo "Running mt-prompt.py with meta-llama/Llama-3.3-70B-Instruct..."
+python mt-prompt.py "meta-llama/Llama-3.3-70B-Instruct" > output_Llama-3.3-70B-Instruct.log 2>&1
 
 echo "All models have been processed successfully!"
 echo "Results are available in the output directory."
