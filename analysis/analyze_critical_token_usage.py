@@ -22,6 +22,8 @@ def get_top_critical_tokens(score_file, top_k=10):
     # Compute average score and get top-k tokens with lowest average
     avg_scores = {tok: sum(scores)/len(scores) for tok, scores in token_scores.items()}
     top_critical = sorted(avg_scores.items(), key=lambda x: x[1])[:top_k]
+    
+    print("Top Critical:", top_critical)
     return [tok for tok, _ in top_critical]
 
 # === STEP 2: Count token occurrences in each turn ===
