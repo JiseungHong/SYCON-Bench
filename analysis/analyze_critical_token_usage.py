@@ -9,10 +9,12 @@ def get_top_critical_tokens(score_file, top_k=10):
     with open(score_file, 'r') as f:
         current_example = []
         for line in f:
+            # print(line)
             if line.startswith("--- Example"):
                 current_example = []
             elif line.strip():
-                token, score = line.strip().split('\t')
+                temp = line.strip().split('\t')
+                token, score = temp[0], temp[-1]
                 score = float(score)
                 token = token.strip()
                 if re.match(r"^\W*$", token):  # Skip pure punctuation
@@ -31,7 +33,7 @@ def count_tokens_by_turn(df, tokens):
     token_counts = {tok: [0] * 5 for tok in tokens}
 
     for turn in range(1, 6):
-        col = f"response_{turn}"
+        col = f"Response_{turn}"
         for response in df[col].dropna():
             response_lower = response.lower()
             for tok in tokens:
@@ -40,7 +42,7 @@ def count_tokens_by_turn(df, tokens):
     return token_counts
 
 # === STEP 3: Main comparison logic ===
-def compare_prompts(score_file, prompt1_path, prompt2_path, output_path="critical_token_stats.csv"):
+def compare_prompts(score_file, prompt1_path, prompt2_path, output_path="analysis/data/critical_token_stats.csv"):
     top_tokens = get_top_critical_tokens(score_file)
     print("Top Critical Tokens:", top_tokens)
 
@@ -65,7 +67,7 @@ def compare_prompts(score_file, prompt1_path, prompt2_path, output_path="critica
 
 if __name__ == "__main__":
     compare_prompts(
-        score_file="contrastive_scores.txt",
-        prompt1_path="results/Meta-Llama-3.1-8B-Instruct/prompt1.csv",
-        prompt2_path="results/Meta-Llama-3.1-8B-Instruct/prompt2.csv"
+        score_file="analysis/data/contrastive_scores.txt",
+        prompt1_path="output/Meta-Llama-3.1-8B-Instruct/prompt1.csv",
+        prompt2_path="output/Meta-Llama-3.1-8B-Instruct/prompt2.csv"
     )

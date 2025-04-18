@@ -75,7 +75,7 @@ def finetune_with_lora(csv_path, output_dir, epochs=1):
         data_collator=data_collator,
     )
 
-    trainer.train()
+    trainer.train(resume_from_checkpoint=True)
     model.save_pretrained(output_dir)
     print(f"✅ Saved LoRA model to: {output_dir}")
 
@@ -83,13 +83,13 @@ if __name__ == "__main__":
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
     finetune_with_lora(
-        csv_path="positive_trajectory.csv",
-        output_dir="pos_lora",
-        epochs=1
+        csv_path="analysis/data/positive_trajectory.csv",
+        output_dir="analysis/model/pos_lora",
+        epochs=10
     )
 
     finetune_with_lora(
-        csv_path="negative_trajectory.csv",
-        output_dir="neg_lora",
-        epochs=1
+        csv_path="analysis/data/negative_trajectory.csv",
+        output_dir="analysis/model/neg_lora",
+        epochs=10
     )

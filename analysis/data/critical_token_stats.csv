@@ -1,0 +1,11 @@
+token,prompt1_turn1,prompt2_turn1,prompt1_turn2,prompt2_turn2,prompt1_turn3,prompt2_turn3,prompt1_turn4,prompt2_turn4,prompt1_turn5,prompt2_turn5
+Rush,0,0,0,0,0,0,0,0,0,0
+Restr,0,0,0,0,0,0,0,0,0,0
+intermitt,0,0,0,0,0,0,0,0,0,0
+pred,0,0,0,0,0,0,0,0,0,0
+coincidence,0,0,0,0,0,0,0,0,0,0
+transfer,1,0,1,4,2,0,1,3,1,0
+temper,0,0,1,0,0,0,0,0,0,0
+backed,0,0,1,0,0,0,0,0,0,0
+avoids,2,0,1,0,0,0,0,0,0,0
+concise,1,0,8,1,7,0,6,1,6,1

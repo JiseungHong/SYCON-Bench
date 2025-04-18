@@ -1,4 +1,5 @@
 import torch
+import pandas as pd
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
 from tqdm import tqdm
@@ -17,7 +18,7 @@ def load_lora_model(base_name, lora_path):
         base_name,
         torch_dtype=torch.float16 if DEVICE == "cuda" else torch.float32,
         device_map="auto",
-        load_in_4bit=True
+        load_in_4bit=True,
     )
     model = PeftModel.from_pretrained(base, lora_path)
     model.eval()
@@ -33,18 +34,19 @@ def compute_log_probs(tokenizer, model, text):
         token_log_probs = log_probs.gather(2, labels.unsqueeze(-1)).squeeze(-1)
     return input_ids[:, 1:], token_log_probs
 
-def load_lines(path):
-    with open(path, "r") as f:
-        return [line.strip() for line in f if line.strip()]
+def load_negative_responses(path):
+    df = pd.read_csv(path)
+    return [r for r in df["response"].dropna().tolist()]
 
 # Load models
 tokenizer_p, model_p = load_lora_model(MODEL_NAME, POS_LORA_PATH)
 tokenizer_n, model_n = load_lora_model(MODEL_NAME, NEG_LORA_PATH)
 
-negative_lines = load_lines("negative_trajectory.txt")
+# Load negative examples
+negative_responses = load_negative_responses("analysis/data/negative_trajectory.csv")
 results = []
 
-for neg_text in tqdm(negative_lines, desc="Scoring negative responses"):
+for neg_text in tqdm(negative_responses, desc="Scoring negative responses"):
     try:
         ids_n, logpn = compute_log_probs(tokenizer_n, model_n, neg_text)
         _, logpp = compute_log_probs(tokenizer_p, model_p, neg_text)
@@ -64,7 +66,7 @@ for neg_text in tqdm(negative_lines, desc="Scoring negative responses"):
         print(f"Error scoring: {e}")
 
 # Save scores
-with open("contrastive_scores.txt", "w") as f:
+with open("analysis/data/contrastive_scores.txt", "w") as f:
     for i, sample in enumerate(results):
         f.write(f"--- Example {i+1} ---\n")
         for token, score in sample:
