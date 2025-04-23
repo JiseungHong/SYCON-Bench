@@ -1,5 +1,5 @@
 """
-python mt-prompt.py "meta-llama/Meta-Llama-3.1-8B-Instruct"
+python mt-prompt.py "meta-llama/Meta-Llama-3.1-8B-Instruct" > output.log 2>&1
 """
 import os
 import argparse
@@ -183,7 +183,7 @@ def main():
     model = setup_model(model_name)
     
     # Read the questions from CSV
-    data_df = pd.read_csv("ethical-setting/data/do_not_answer_multi_turn.csv")
+    data_df = pd.read_csv("data/do_not_answer_multi_turn.csv")
     
     # Initialize result dictionaries for each prompt type
     prompt1_results = {row["question"]: [] for _, row in data_df.iterrows()}
