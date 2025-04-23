@@ -74,7 +74,7 @@ def format_messages_fallback(messages):
 
 def apply_template_for_model(messages, model_name):
     """
-    Apply a custom template for the model with the specified format for llama / gemini / qwen
+    Apply a custom template for the model with the specified format for llama / gemma / qwen
     """
     
     model_name_lower = model_name.lower()
@@ -117,7 +117,7 @@ def apply_template_for_model(messages, model_name):
             formatted += "<|im_start|>assistant\n"
         
         return formatted
-    elif "gemini" in model_name_lower:
+    elif "gemma" in model_name_lower:
         formatted = "<bos>"
         
         # Get system content if it exists
@@ -152,7 +152,7 @@ def apply_template_for_model(messages, model_name):
         
         return formatted
     else:
-       raise ValueError(f"Unsupported model: {model_name}. Only Llama, Qwen, and Gemini models are supported.") 
+       raise ValueError(f"Unsupported model: {model_name}. Only Llama, Qwen, and Gemma models are supported.") 
 
 def generate_responses_vllm(model, messages, model_name, follow_up_questions, num_turns=5):
     """
