@@ -74,30 +74,85 @@ def format_messages_fallback(messages):
 
 def apply_template_for_model(messages, model_name):
     """
-    Apply a custom template for the model with the specified format / meta-llama/Meta-Llama-3.1-8B-Instruct
+    Apply a custom template for the model with the specified format for llama / gemini / qwen
     """
-    # Start with the beginning of text token
-    formatted = "<<|begin_of_text|>"
     
-    # Add system header and message
-    system_message = next((msg["content"] for msg in messages if msg["role"] == "system"), "")
-    formatted += f"<|start_header_id|>system<|end_header_id|>\n\nCutting Knowledge Date: December 2023\nToday Date: 26 Jul 2024\n\n{system_message}<|eot_id|>"
+    model_name_lower = model_name.lower()
     
-    # Process the rest of the messages
-    for i, message in enumerate(messages):
-        if message["role"] == "system":
-            # System message already handled
-            continue
-        elif message["role"] == "user":
-            formatted += f"<|start_header_id|>user<|end_header_id|>\n\n{message['content']}<|eot_id|>"
-        elif message["role"] == "assistant":
-            formatted += f"<|start_header_id|>assistant<|end_header_id|>\n\n{message['content']}<|eot_id|>"
-    
-    # Add final assistant header for generation
-    if not formatted.endswith("<|start_header_id|>assistant<|end_header_id|>\n\n"):
-        formatted += "<|start_header_id|>assistant<|end_header_id|>\n\n"
-    
-    return formatted
+    if "llama" in model_name_lower:
+        # Start with the beginning of text token
+        formatted = "<<|begin_of_text|>"
+        
+        # Add system header and message
+        system_message = next((msg["content"] for msg in messages if msg["role"] == "system"), "")
+        formatted += f"<|start_header_id|>system<|end_header_id|>\n\nCutting Knowledge Date: December 2023\nToday Date: 26 Jul 2024\n\n{system_message}<|eot_id|>"
+        
+        # Process the rest of the messages
+        for i, message in enumerate(messages):
+            if message["role"] == "system":
+                # System message already handled
+                continue
+            elif message["role"] == "user":
+                formatted += f"<|start_header_id|>user<|end_header_id|>\n\n{message['content']}<|eot_id|>"
+            elif message["role"] == "assistant":
+                formatted += f"<|start_header_id|>assistant<|end_header_id|>\n\n{message['content']}<|eot_id|>"
+        
+        # Add final assistant header for generation
+        if not formatted.endswith("<|start_header_id|>assistant<|end_header_id|>\n\n"):
+            formatted += "<|start_header_id|>assistant<|end_header_id|>\n\n"
+        
+        return formatted
+    elif "qwen" in model_name_lower:
+        formatted = ""
+        for message in messages:
+            if message["role"] == "system":
+                formatted += f"<|im_start|>system\n{message['content']}<|im_end|>\n"
+            elif message["role"] == "user":
+                formatted += f"<|im_start|>user\n{message['content']}<|im_end|>\n"
+            elif message["role"] == "assistant":
+                formatted += f"<|im_start|>assistant\n{message['content']}<|im_end|>\n"
+        
+        # Add final assistant prompt for generation
+        if not formatted.endswith("<|im_end|>\n<|im_start|>assistant\n"):
+            formatted += "<|im_start|>assistant\n"
+        
+        return formatted
+    elif "gemini" in model_name_lower:
+        formatted = "<bos>"
+        
+        # Get system content if it exists
+        system_content = ""
+        for message in messages:
+            if message["role"] == "system":
+                system_content = message["content"]
+                break
+        
+        # Process messages
+        is_first_user = True
+        for i, message in enumerate(messages):
+            if message["role"] == "system":
+                # System content is handled separately
+                continue
+            elif message["role"] == "user":
+                if is_first_user:
+                    # First user message combines system content + user content
+                    user_content = message["content"]
+                    if system_content:
+                        formatted += f"<start_of_turn>user\n{system_content}\n{user_content}<end_of_turn>\n"
+                    else:
+                        formatted += f"<start_of_turn>user\n{user_content}<end_of_turn>\n"
+                    is_first_user = False
+                else:
+                    formatted += f"<start_of_turn>user\n{message['content']}<end_of_turn>\n"
+            elif message["role"] == "assistant":
+                formatted += f"<start_of_turn>model\n{message['content']}<end_of_turn>\n"
+        
+        # Add final model prompt for generation
+        formatted += "<start_of_turn>model\n"
+        
+        return formatted
+    else:
+       raise ValueError(f"Unsupported model: {model_name}. Only Llama, Qwen, and Gemini models are supported.") 
 
 def generate_responses_vllm(model, messages, model_name, follow_up_questions, num_turns=5):
     """
