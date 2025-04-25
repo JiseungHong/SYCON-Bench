@@ -1,32 +1,23 @@
 """
-python mt-prompt.py "Qwen/Qwen2.5-7B-Instruct"
+python mt-prompt-vllm.py "Qwen/Qwen2.5-72B-Instruct"
 """
 import os
 import csv
 import argparse
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+import json
+from transformers import AutoTokenizer
 import time
 import random
 import pandas as pd
 from tqdm import tqdm
+from vllm import LLM, SamplingParams
 
 def setup_model_and_tokenizer(model_name):
     """
-    Load the model and tokenizer with appropriate quantization to fit in GPU memory
+    Load the tokenizer and vllm model
     """
     print(f"Loading model: {model_name}")
-    
-    # Set up quantization parameters based on model size
-    if "70B" in model_name or "65B" in model_name:
-        # 4-bit quantization for very large models
-        quantization_config = {"load_in_4bit": True, "bnb_4bit_compute_dtype": torch.float16}
-    elif any(size in model_name for size in ["32B", "33B", "27B", "34B", "30B"]):
-        # 8-bit quantization for large models
-        quantization_config = {"load_in_8bit": True}
-    else:
-        # 16-bit for smaller models that can fit in memory
-        quantization_config = {"torch_dtype": torch.float16}
     
     # Load tokenizer with specific configurations for certain models
     tokenizer_kwargs = {}
@@ -46,31 +37,31 @@ def setup_model_and_tokenizer(model_name):
     if any(name in model_name_lower for name in ["llama", "mistral"]) and tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     
-    # Load model with appropriate quantization
-    model_kwargs = {"device_map": "auto"}
+    # Calculate tensor_parallel_size based on model size and available GPUs
+    gpu_count = torch.cuda.device_count()
     
-    if "4bit" in quantization_config:
-        model_kwargs.update({
-            "load_in_4bit": True,
-            "bnb_4bit_compute_dtype": torch.float16
-        })
-    elif "8bit" in quantization_config:
-        model_kwargs.update({
-            "load_in_8bit": True
-        })
-    else:
-        model_kwargs.update({
-            "torch_dtype": torch.float16
-        })
+    # For 72B models, use all available GPUs
+    tensor_parallel_size = gpu_count
     
-    # Add trust_remote_code for models that require it
-    if any(name in model_name_lower for name in ["mpt", "falcon", "starcoder", "rwkv"]):
-        model_kwargs["trust_remote_code"] = True
+    # Calculate appropriate GPU memory utilization
+    # For very large models, set slightly lower to avoid OOM
+    gpu_memory_utilization = 0.85 if "72B" in model_name else 0.9
     
-    # Load the model
-    model = AutoModelForCausalLM.from_pretrained(model_name, **model_kwargs)
+    # Set swap space higher for larger models
+    swap_space = 32 if "72B" in model_name else 16
     
-    return model, tokenizer
+    # Initialize the vllm LLM
+    llm = LLM(
+        model=model_name,
+        gpu_memory_utilization=gpu_memory_utilization,
+        tensor_parallel_size=tensor_parallel_size,
+        enable_prefix_caching=True,
+        swap_space=swap_space,
+        max_model_len=8192,
+        trust_remote_code=True
+    )
+    
+    return llm, tokenizer
 
 def get_chat_messages(question, prompt_type):
     """
@@ -156,44 +147,31 @@ def load_pushback_prompts():
         print(f"Error loading pushback prompts: {e}")
         return {}
 
-def generate_responses(model, tokenizer, messages, model_name, question, pushbacks, num_responses=5):
+def generate_responses_vllm(llm, tokenizer, messages, model_name, question, pushbacks, num_responses=5):
     """
-    Generate multiple responses using the pushback prompts
+    Generate multiple responses using vllm and the pushback prompts
     """
     responses = []
     current_messages = messages.copy()  # Start with the initial messages
     
-    # Set up generation parameters
-    gen_kwargs = {
-        "max_new_tokens": 512,
-        "temperature": 0.0,
-        "top_p": 0.9,
-        "do_sample": False
-    }
-    
-    # Adjust parameters based on model type
-    model_name_lower = model_name.lower()
-    if any(name in model_name_lower for name in ["llama-2", "llama-3", "mistral-instruct"]):
-        gen_kwargs["eos_token_id"] = tokenizer.eos_token_id
+    # Set up sampling parameters for vllm
+    sampling_params = SamplingParams(
+        temperature=0.0,
+        top_p=0.9,
+        max_tokens=512,
+        stop=None
+    )
     
     # Generate multiple responses
     for i in range(num_responses):
-        # Create pipeline for generation
-        generator = pipeline(
-            "text-generation",
-            model=model,
-            tokenizer=tokenizer,
-            **gen_kwargs
-        )
-        
         # Apply the chat template to get a formatted prompt string
         prompt = apply_template(current_messages, tokenizer, model_name)
         
         print(f"Prompt {i+1}: {prompt}")
         
-        # Generate response
-        output = generator(prompt, return_full_text=False)[0]['generated_text']
-        response = output.strip()
+        # Generate response using vllm
+        outputs = llm.generate([prompt], sampling_params)
+        response = outputs[0].outputs[0].text.strip()
         responses.append(response)
         
         # Add the model's response and the push back prompt to the messages
@@ -250,7 +228,10 @@ def save_batch_results(results, output_file, batch_questions):
         batch_df.to_csv(output_file)
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate and save multiple LLM responses")
+    # Set environment variable for vllm to allow long sequences
+    os.environ["VLLM_ALLOW_LONG_MAX_MODEL_LEN"] = "1"
+    
+    parser = argparse.ArgumentParser(description="Generate and save multiple LLM responses using vllm")
     parser.add_argument("model_name", type=str, help="Hugging Face model name")
     parser.add_argument("--batch_size", type=int, default=4, help="Number of questions to process in each batch")
     parser.add_argument("--num_responses", type=int, default=5, help="Number of responses to generate for each question")
@@ -283,8 +264,8 @@ def main():
     print(f"Batch size: {batch_size}")
     print(f"Number of responses per question: {num_responses}")
     
-    # Load the model and tokenizer
-    model, tokenizer = setup_model_and_tokenizer(model_name)
+    # Load the model and tokenizer with vllm
+    llm, tokenizer = setup_model_and_tokenizer(model_name)
     
     # Check if the model has a chat template and log
     has_chat_template = hasattr(tokenizer, 'apply_chat_template')
@@ -340,7 +321,7 @@ def main():
             for question in tqdm(batch_questions, desc="Questions in batch", leave=False):
                 try:
                     messages = get_chat_messages(question, prompt_type)
-                    responses = generate_responses(model, tokenizer, messages, model_name, question, pushbacks, num_responses=num_responses)
+                    responses = generate_responses_vllm(llm, tokenizer, messages, model_name, question, pushbacks, num_responses=num_responses)
                     batch_results[question] = responses
                 except ValueError as e:
                     print(f"Error: {e}")
