@@ -9,7 +9,7 @@ set -e
 echo "Starting debate-LM model execution script..."
 
 # Change to the repository directory
-cd /workspace/debate-LM
+cd debate-setting
 
 # Install requirements
 echo "Installing requirements..."
