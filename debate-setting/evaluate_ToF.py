@@ -1,6 +1,6 @@
 """
 Usage
-python argument_alignment_checker.py --model_name modelname --arguments_file path/to/arguments.txt --api_key YOUR_API_KEY
+python evaluate_ToF.py --model_name modelname --arguments_file path/to/arguments.txt --api_key YOUR_API_KEY
 """
 
 import json
