@@ -9,7 +9,7 @@ import os
 import logging
 from argparse import ArgumentParser
 from collections import defaultdict
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 import statistics
 from tqdm import tqdm
 
@@ -130,6 +130,48 @@ def check_false_presupposition_handling(response: str, question: str, api_key: s
         # Default to false in case of error
         return False
 
+def load_existing_results(all_results_file: str) -> Tuple[List[List[int]], int]:
+    """
+    Load existing evaluation results from a CSV file
+    
+    Args:
+        all_results_file (str): Path to CSV file with existing results
+    
+    Returns:
+        Tuple[List[List[int]], int]: Tuple containing list of row evaluations and last completed row index
+    """
+    existing_evaluations = []
+    last_completed_row = 0
+    
+    if not os.path.exists(all_results_file):
+        return existing_evaluations, last_completed_row
+    
+    try:
+        with open(all_results_file, 'r', encoding='utf-8') as f:
+            reader = csv.reader(f)
+            header = next(reader)  # Skip header
+            
+            for row in reader:
+                if not row or len(row) < 6:
+                    continue
+                    
+                row_index = int(row[0])
+                row_evaluations = [int(val) if val != '' and val != '-1' else -1 for val in row[1:6]]
+                
+                # Extend list if needed
+                while len(existing_evaluations) < row_index:
+                    existing_evaluations.append([])
+                
+                existing_evaluations[row_index - 1] = row_evaluations
+                last_completed_row = row_index
+        
+        logging.info(f"Loaded existing results from {all_results_file}. Last completed row: {last_completed_row}")
+        return existing_evaluations, last_completed_row
+        
+    except Exception as e:
+        logging.error(f"Error loading existing results from {all_results_file}: {e}")
+        return [], 0
+
 def process_prompt_file(csv_file: str, questions: List[str], api_key: str, output_file: str, all_results_file: str) -> List[int]:
     """
     Process a single prompt CSV file
@@ -145,20 +187,53 @@ def process_prompt_file(csv_file: str, questions: List[str], api_key: str, outpu
         List[int]: List of counts for each row (how many responses identified false presuppositions)
     """
     data = load_csv_data(csv_file)
+    
+    # Check if we have existing results to resume from
+    existing_evaluations, last_completed_row = load_existing_results(all_results_file)
+    
+    # Initialize results lists
     results = []
     all_evaluation_results = []
     
+    # Fill in results with existing data if available
+    if existing_evaluations:
+        for row_evals in existing_evaluations:
+            if row_evals:
+                # Count consecutive correct identifications before first flip
+                identified_count = 0
+                first_flip_found = False
+                
+                for eval_value in row_evals:
+                    if eval_value == 1 and not first_flip_found:
+                        identified_count += 1
+                    elif eval_value == 0 and not first_flip_found:
+                        first_flip_found = True
+                
+                results.append(identified_count)
+                all_evaluation_results.append(row_evals)
+            else:
+                results.append(0)
+                all_evaluation_results.append([-1, -1, -1, -1, -1])
+    
+    # Determine start row for processing
+    start_row = last_completed_row
+    logging.info(f"Resuming evaluation from row {start_row + 1}")
+    
     # Process each row with tqdm for progress tracking
-    for i, row in enumerate(tqdm(data, desc="Evaluating responses")):
-        if i >= len(questions):
-            logging.warning(f"Skipping row {i+1} due to insufficient questions data")
+    for i, row in enumerate(tqdm(data[start_row:], desc="Evaluating responses", initial=start_row, total=len(data))):
+        # Calculate actual row index
+        actual_i = start_row + i
+        
+        if actual_i >= len(questions):
+            logging.warning(f"Skipping row {actual_i+1} due to insufficient questions data")
             results.append(0)
+            all_evaluation_results.append([-1, -1, -1, -1, -1])
             continue
         
-        question = questions[i]
+        question = questions[actual_i]
         
-        if i < 5:
-            logging.info(f"Row {i+1}: Question: {question}")
+        if actual_i < 5:
+            logging.info(f"Row {actual_i+1}: Question: {question}")
         
         identified_count = 0
         row_evaluations = []
@@ -180,36 +255,42 @@ def process_prompt_file(csv_file: str, questions: List[str], api_key: str, outpu
                 elif not identified_presupposition and not first_flip_found:
                     first_flip_found = True
             else:
-                logging.warning(f"Missing or empty '{response_key}' in row {i+1}")
+                logging.warning(f"Missing or empty '{response_key}' in row {actual_i+1}")
                 row_evaluations.append(-1)  # Mark as missing
                 
                 # If we haven't found a flip yet, this counts as a flip
                 if not first_flip_found:
                     first_flip_found = True
         
-        results.append(identified_count)
-        all_evaluation_results.append(row_evaluations)
-        logging.info(f"Row {i+1}: Turn of Flip: {identified_count} (0 means none identified, 5 means all identified)")
-    
-    # Write results to output file
-    try:
-        with open(output_file, 'w', encoding='utf-8') as f:
-            for i, count in enumerate(results):
-                f.write(f"Row {i+1}: Turn of Flip: {count}\n")
-    except Exception as e:
-        logging.error(f"Error writing to output file {output_file}: {e}")
-    
-    # Write all evaluation results to CSV
-    try:
-        with open(all_results_file, 'w', encoding='utf-8', newline='') as f:
-            writer = csv.writer(f)
-            # Write header
-            writer.writerow(["Row", "Response_1", "Response_2", "Response_3", "Response_4", "Response_5"])
-            # Write data
-            for i, row_evaluations in enumerate(all_evaluation_results):
-                writer.writerow([i+1] + row_evaluations)
-    except Exception as e:
-        logging.error(f"Error writing to all results file {all_results_file}: {e}")
+        # Extend results and all_evaluation_results if needed
+        while len(results) <= actual_i:
+            results.append(0)
+        while len(all_evaluation_results) <= actual_i:
+            all_evaluation_results.append([-1, -1, -1, -1, -1])
+            
+        results[actual_i] = identified_count
+        all_evaluation_results[actual_i] = row_evaluations
+        
+        logging.info(f"Row {actual_i+1}: Turn of Flip: {identified_count} (0 means none identified, 5 means all identified)")
+        
+        # Write current progress to output files after each row
+        # This ensures we don't lose progress if the script is interrupted
+        try:
+            # Write results to output file
+            with open(output_file, 'w', encoding='utf-8') as f:
+                for idx, count in enumerate(results):
+                    f.write(f"Row {idx+1}: Turn of Flip: {count}\n")
+                    
+            # Write all evaluation results to CSV
+            with open(all_results_file, 'w', encoding='utf-8', newline='') as f:
+                writer = csv.writer(f)
+                # Write header
+                writer.writerow(["Row", "Response_1", "Response_2", "Response_3", "Response_4", "Response_5"])
+                # Write data
+                for idx, row_evals in enumerate(all_evaluation_results):
+                    writer.writerow([idx+1] + row_evals)
+        except Exception as e:
+            logging.error(f"Error writing to output files: {e}")
     
     return results
 
@@ -270,12 +351,12 @@ def main(args):
             "file": os.path.join(input_dir, "prompt4.csv"), 
             "output": os.path.join(output_dir, "prompt4_results.txt"),
             "all_results": os.path.join(output_dir, "prompt4_result_all.csv")
-        },
-        {
-            "file": os.path.join(input_dir, "prompt5.csv"), 
-            "output": os.path.join(output_dir, "prompt5_results.txt"),
-            "all_results": os.path.join(output_dir, "prompt5_result_all.csv")
         }
+        # {
+        #     "file": os.path.join(input_dir, "prompt5.csv"), 
+        #     "output": os.path.join(output_dir, "prompt5_results.txt"),
+        #     "all_results": os.path.join(output_dir, "prompt5_result_all.csv")
+        # }
     ]
     
     all_results = {}
