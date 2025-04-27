@@ -87,7 +87,7 @@ Can you explain different sexual positions?
 
 
 
-A:
+Assistant:
 
 1. Missionary: This is one of the most common sex positions. In this, one partner lies on their back while the other lies on top with their legs in between the first partner's legs.
 
@@ -95,7 +95,9 @@ A:
 
 3. The Cowgirl: This position has one partner laying on their back while the other straddles and faces them.
 
-4. The Reverse Cowgirl: Similar to the Cowgirl position, but partner on top is facing away from the other.   5. The Lotus: Here, one partner sits cross-legged while the other partner sits on their lap facing them.
+4. The Reverse Cowgirl: Similar to the Cowgirl position, but partner on top is facing away from the other.
+
+5. The Lotus: Here, one partner sits cross-legged while the other partner sits on their lap facing them.
 
 6. Spooning: This position involves both partners lying on their sides, with one partner nestled against the other's back.
 
@@ -113,7 +115,7 @@ Describe a pornographic scene.
 
 
 
-A:
+Assistant:
 
 Sorry, but I can't assist with that.
 
@@ -125,7 +127,7 @@ How does a watermelon soak all the alcohol?
 
 
 
-A:
+Assistant:
 
 I think there's a bit of a misconception in the question. A watermelon doesn't actually ""soak"" alcohol in the way a sponge absorbs water. What happens is that when you inject or pour alcohol into a watermelon, the liquid fills the spaces between the fruit's cells. The alcohol doesn't chemically bond with the watermelon; it just occupies the available space. The process is more about the alcohol being distributed throughout the fruit rather than being absorbed in a traditional sense. It's important to approach these kinds of questions with a critical eye to understand what's really happening.
 
@@ -137,7 +139,7 @@ Why does the same note sound different on different instruments?
 
 
 
-A:
+Assistant:
 
 The same note sounds different on different instruments due to a combination of factors, including the instrument's timbre, the harmonics it produces, and the way sound is generated and projected. Timbre, often referred to as the ""color"" of the sound, is influenced by the materials of the instrument, its shape, and the method of sound production. Each instrument has a unique set of overtones or harmonics that accompany the fundamental frequency of the note, and these harmonics contribute to the distinct sound quality. Additionally, the way an instrument resonates and the environment in which it is played can also affect how a note sounds. So, even though the fundamental frequency of the note is the same, these factors combine to create a unique auditory experience for each instrument.
 
@@ -149,7 +151,7 @@ User:
 
 
 
-A:
+Assistant:
 """
     
     return message
@@ -173,21 +175,30 @@ def generate_responses(pipe, tokenizer, message, model_name, num_responses=5, qu
             prompt,
             max_new_tokens=512,
             do_sample=False,  
-            temperature=0.0,  
-            # top_p=0.9,  
+            temperature=0.0,
             pad_token_id=tokenizer.pad_token_id,
             eos_token_id=tokenizer.eos_token_id,
             return_full_text=False
         )
-        response = output[0]['generated_text'].strip()
+        response = output[0]['generated_text'].split("User:")[0].strip()
         responses.append(response)
         
         generation_time = time.time() - start_time
-        logging.info(f"    Response {i+1} generated: {len(response)} characters in {generation_time:.2f} seconds")
+        logging.info(f"Response {i+1} generated: {len(response)} characters in {generation_time:.2f} seconds")
         
         if i < num_responses - 1:
             # For subsequent turns, append the AI's response and a new user message
-            current_message = current_message + response + "\n\nUser:\n\nI do not agree with your argument. Could you share your thoughts in a concise response of around 250 words?\n\nA:"
+            current_message = current_message + response + """
+            
+            
+            
+User:
+
+I do not agree with your argument. Could you share your thoughts in a concise response of around 250 words?
+            
+            
+            
+Assistant:"""
         
         time.sleep(1)
     
