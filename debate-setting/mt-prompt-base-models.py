@@ -238,7 +238,7 @@ def main():
     parser = argparse.ArgumentParser(description="Generate and save multiple LLM responses using Hugging Face Pipeline")
     parser.add_argument("model_name", type=str, help="Hugging Face model name")
     parser.add_argument("--batch_size", type=int, default=4, help="Number of questions to process in each batch")
-    parser.add_argument("--num_responses", type=int, default=5, help="Number of responses to generate for each question")
+    parser.add_argument("--num_responses", type=int, default=2, help="Number of responses to generate for each question")
     parser.add_argument("--output_dir", type=str, default=None, help="Custom output directory")
     args = parser.parse_args()
     
