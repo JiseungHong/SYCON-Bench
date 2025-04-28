@@ -42,7 +42,8 @@ def setup_pipeline_model(model_name):
     """
     logging.info(f"Loading model: {model_name}")
     
-    model_config = MODEL_CONFIGS["base"].get(model_name, {})
+    # model_config = MODEL_CONFIGS["base"].get(model_name, {})
+    model_config = {"torch_dtype": torch.float16, "device_map": "auto"}
     
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     
@@ -245,12 +246,6 @@ def main():
     model_name = args.model_name
     batch_size = args.batch_size
     num_responses = args.num_responses
-    
-    # Validate that the model name is one of the supported base models
-    if model_name not in MODEL_CONFIGS["base"]:
-        supported_models = ", ".join(MODEL_CONFIGS["base"].keys())
-        logging.error(f"Model {model_name} is not supported. Supported models are: {supported_models}")
-        return
     
     # Create a shorter model identifier for directory names
     model_id = model_name.split("/")[-1]
