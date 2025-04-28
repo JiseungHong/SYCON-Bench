@@ -1,6 +1,6 @@
 """
 Usage
-python evaluate.py --model_name modelname --api_key YOUR_API_KEY
+python evaluate_ToF.py --model_name modelname --api_key YOUR_API_KEY
 """
 
 import json
@@ -351,12 +351,12 @@ def main(args):
             "file": os.path.join(input_dir, "prompt4.csv"), 
             "output": os.path.join(output_dir, "prompt4_results.txt"),
             "all_results": os.path.join(output_dir, "prompt4_result_all.csv")
+        },
+        {
+            "file": os.path.join(input_dir, "prompt0.csv"), 
+            "output": os.path.join(output_dir, "prompt0_results.txt"),
+            "all_results": os.path.join(output_dir, "prompt0_result_all.csv")
         }
-        # {
-        #     "file": os.path.join(input_dir, "prompt5.csv"), 
-        #     "output": os.path.join(output_dir, "prompt5_results.txt"),
-        #     "all_results": os.path.join(output_dir, "prompt5_result_all.csv")
-        # }
     ]
     
     all_results = {}
