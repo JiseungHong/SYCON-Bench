@@ -1,6 +1,6 @@
 """
 Usage
-python evaluate_oscillate.py --model_name modelname --api_key YOUR_API_KEY
+python evaluate_oscillate.py --model_name modelname --api_key YOUR_API_KEY --prompts 0 2 4
 """
 
 import json
@@ -312,56 +312,66 @@ def main(args):
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
     
-    # Process only prompt0.csv
-    csv_file = os.path.join(input_dir, "prompt0.csv")
-    output_file = os.path.join(output_dir, "prompt0_results.txt")
-    csv_output_file = os.path.join(output_dir, "prompt0.csv")
+    # Process specified prompts
+    prompts_to_process = args.prompts if args.prompts else [0]  # Default to prompt0 if none specified
     
-    # Check if file exists
-    if not os.path.isfile(csv_file):
-        logging.error(f"File not found: {csv_file}")
-        return
-        
-    logging.info(f"Processing prompt file: {csv_file}")
+    all_results = {}
     
-    tof_results, nof_results = process_prompt_file(
-        csv_file,
-        arguments,
-        api_key,
-        output_file,
-        csv_output_file
-    )
+    # Process each specified prompt
+    for prompt_num in prompts_to_process:
+        prompt_file = f"prompt{prompt_num}.csv"
+        csv_file = os.path.join(input_dir, prompt_file)
+        output_file = os.path.join(output_dir, f"prompt{prompt_num}_results.txt")
+        csv_output_file = os.path.join(output_dir, f"prompt{prompt_num}_output.csv")
+        
+        # Check if file exists
+        if not os.path.isfile(csv_file):
+            logging.error(f"File not found: {csv_file}")
+            continue
+            
+        logging.info(f"Processing prompt{prompt_num}: {csv_file}")
+        
+        tof_results, nof_results = process_prompt_file(
+            csv_file,
+            arguments,
+            api_key,
+            output_file,
+            csv_output_file
+        )
+        
+        # Calculate means
+        if tof_results and nof_results:
+            mean_tof = statistics.mean(tof_results)
+            mean_nof = statistics.mean(nof_results)
+            
+            logging.info(f"Prompt{prompt_num} Mean ToF: {mean_tof:.2f}")
+            logging.info(f"Prompt{prompt_num} Mean NoF: {mean_nof:.2f}")
+            
+            # Store results
+            all_results[f"prompt{prompt_num}"] = {
+                "tof_results": tof_results,
+                "nof_results": nof_results,
+                "mean_tof": mean_tof,
+                "mean_nof": mean_nof
+            }
     
-    # Calculate means
-    if tof_results and nof_results:
-        mean_tof = statistics.mean(tof_results)
-        mean_nof = statistics.mean(nof_results)
-        
-        logging.info(f"Mean ToF: {mean_tof:.2f}")
-        logging.info(f"Mean NoF: {mean_nof:.2f}")
-        
-        # Write summary to a JSON file
+    # Write summary to a JSON file
+    if all_results:
         summary_file = os.path.join(output_dir, "summary.json")
         try:
-            summary_data = {
-                "prompt0": {
-                    "tof_results": tof_results,
-                    "nof_results": nof_results,
-                    "mean_tof": mean_tof,
-                    "mean_nof": mean_nof
-                }
-            }
-            
             with open(summary_file, 'w', encoding='utf-8') as f:
-                json.dump(summary_data, f, indent=4)
+                json.dump(all_results, f, indent=4)
             logging.info(f"Summary written to {summary_file}")
         except Exception as e:
             logging.error(f"Error writing summary file: {e}")
-        
-        # Print final summary
+    
+    # Print final summary
+    if all_results:
         print("\nFinal Summary:")
-        print(f"Mean ToF (Turn of Flip): {mean_tof:.2f}")
-        print(f"Mean NoF (Number of Flips): {mean_nof:.2f}")
+        print("=" * 60)
+        for prompt_key, data in all_results.items():
+            print(f"{prompt_key}: Mean ToF = {data['mean_tof']:.2f}, Mean NoF = {data['mean_nof']:.2f}")
+        print("=" * 60)
     else:
         logging.warning("No results generated")
 
@@ -369,6 +379,7 @@ if __name__ == "__main__":
     parser = ArgumentParser(description="Argument Alignment Checker with GPT-4o")
     parser.add_argument("--model_name", type=str, required=True, help="Model name (used for file paths)")
     parser.add_argument("--api_key", type=str, default=None, help="OpenAI API key (overrides env variable)")
+    parser.add_argument("--prompts", type=int, nargs="+", help="Prompt numbers to process (0-4), defaults to prompt0 only")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     
     args = parser.parse_args()
