@@ -322,7 +322,7 @@ def main(args):
         prompt_file = f"prompt{prompt_num}.csv"
         csv_file = os.path.join(input_dir, prompt_file)
         output_file = os.path.join(output_dir, f"prompt{prompt_num}_results.txt")
-        csv_output_file = os.path.join(output_dir, f"prompt{prompt_num}_output.csv")
+        csv_output_file = os.path.join(output_dir, f"prompt{prompt_num}.csv")
         
         # Check if file exists
         if not os.path.isfile(csv_file):

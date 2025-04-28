@@ -1,6 +1,6 @@
 """
 Usage
-python evaluate_oscillate.py --model_name modelname --api_key YOUR_API_KEY
+python evaluate_oscillate.py --model_name modelname --api_key YOUR_API_KEY --prompts 0 2 4
 """
 
 import json
@@ -388,50 +388,26 @@ def main(args):
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
     
-    # Process prompt files
-    prompt_files = [
-        {
-            "file": os.path.join(input_dir, "prompt0.csv"), 
-            "output": os.path.join(output_dir, "prompt0_results.txt"),
-            "csv_output": os.path.join(output_dir, "prompt0.csv")
-        },
-        {
-            "file": os.path.join(input_dir, "prompt1.csv"), 
-            "output": os.path.join(output_dir, "prompt1_results.txt"),
-            "csv_output": os.path.join(output_dir, "prompt1.csv")
-        },
-        {
-            "file": os.path.join(input_dir, "prompt2.csv"), 
-            "output": os.path.join(output_dir, "prompt2_results.txt"),
-            "csv_output": os.path.join(output_dir, "prompt2.csv")
-        },
-        {
-            "file": os.path.join(input_dir, "prompt3.csv"), 
-            "output": os.path.join(output_dir, "prompt3_results.txt"),
-            "csv_output": os.path.join(output_dir, "prompt3.csv")
-        },
-        {
-            "file": os.path.join(input_dir, "prompt4.csv"), 
-            "output": os.path.join(output_dir, "prompt4_results.txt"),
-            "csv_output": os.path.join(output_dir, "prompt4.csv")
-        }
-    ]
+    # Determine which prompt files to process
+    prompts_to_process = args.prompts if args.prompts else [0]  # Default to prompt0 if none specified
+    
+    logging.info(f"Processing prompts: {prompts_to_process}")
     
     all_results = {}
     
-    for prompt_info in prompt_files:
-        csv_file = prompt_info['file']
-        output_file = prompt_info['output']
-        csv_output_file = prompt_info['csv_output']
-        
-        prompt_name = os.path.basename(csv_file).split('.')[0]
+    # Process each specified prompt
+    for prompt_num in prompts_to_process:
+        prompt_file = f"prompt{prompt_num}.csv"
+        csv_file = os.path.join(input_dir, prompt_file)
+        output_file = os.path.join(output_dir, f"prompt{prompt_num}_results.txt")
+        csv_output_file = os.path.join(output_dir, f"prompt{prompt_num}.csv")
         
         # Check if file exists
         if not os.path.isfile(csv_file):
             logging.error(f"File not found: {csv_file}")
             continue
             
-        logging.info(f"Processing prompt file: {csv_file}")
+        logging.info(f"Processing prompt{prompt_num}: {csv_file}")
         
         tof_results, nof_results = process_prompt_file(
             csv_file,
@@ -446,37 +422,44 @@ def main(args):
             mean_tof = statistics.mean(tof_results)
             mean_nof = statistics.mean(nof_results)
             
-            logging.info(f"{prompt_name} Mean ToF: {mean_tof:.2f}")
-            logging.info(f"{prompt_name} Mean NoF: {mean_nof:.2f}")
+            logging.info(f"Prompt{prompt_num} Mean ToF: {mean_tof:.2f}")
+            logging.info(f"Prompt{prompt_num} Mean NoF: {mean_nof:.2f}")
             
             # Store results
-            all_results[prompt_name] = {
+            all_results[f"prompt{prompt_num}"] = {
                 "tof_results": tof_results,
                 "nof_results": nof_results,
                 "mean_tof": mean_tof,
                 "mean_nof": mean_nof
             }
         else:
-            logging.warning(f"No results for {prompt_name}")
+            logging.warning(f"No results for prompt{prompt_num}")
     
     # Write summary to a JSON file
-    summary_file = os.path.join(output_dir, "summary.json")
-    try:
-        with open(summary_file, 'w', encoding='utf-8') as f:
-            json.dump(all_results, f, indent=4)
-        logging.info(f"Summary written to {summary_file}")
-    except Exception as e:
-        logging.error(f"Error writing summary file: {e}")
+    if all_results:
+        summary_file = os.path.join(output_dir, "summary.json")
+        try:
+            with open(summary_file, 'w', encoding='utf-8') as f:
+                json.dump(all_results, f, indent=4)
+            logging.info(f"Summary written to {summary_file}")
+        except Exception as e:
+            logging.error(f"Error writing summary file: {e}")
     
     # Print final summary
-    print("\nFinal Summary:")
-    for prompt_name, data in sorted(all_results.items()):
-        print(f"{prompt_name}: Mean ToF = {data['mean_tof']:.2f}, Mean NoF = {data['mean_nof']:.2f}")
+    if all_results:
+        print("\nFinal Summary:")
+        print("=" * 60)
+        for prompt_key, data in sorted(all_results.items()):
+            print(f"{prompt_key}: Mean ToF = {data['mean_tof']:.2f}, Mean NoF = {data['mean_nof']:.2f}")
+        print("=" * 60)
+    else:
+        logging.warning("No results generated")
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="False Presupposition Handling Evaluation Script")
     parser.add_argument("--model_name", type=str, required=True, help="Model name (used for file paths)")
     parser.add_argument("--api_key", type=str, default=None, help="OpenAI API key (overrides env variable)")
+    parser.add_argument("--prompts", type=int, nargs="+", help="Prompt numbers to process (0-4), defaults to prompt0 only")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     
     args = parser.parse_args()
