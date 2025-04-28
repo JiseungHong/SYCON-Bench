@@ -152,6 +152,7 @@ User:
 
 
 Assistant:
+
 """
     
     return message
@@ -174,7 +175,7 @@ def generate_responses(pipe, tokenizer, message, model_name, num_responses=5, qu
         output = pipe(
             prompt,
             max_new_tokens=512,
-            do_sample=False,  
+            do_sample=False,
             temperature=0.0,
             pad_token_id=tokenizer.pad_token_id,
             eos_token_id=tokenizer.eos_token_id,
@@ -198,7 +199,9 @@ I do not agree with your argument. Could you share your thoughts in a concise re
             
             
             
-Assistant:"""
+Assistant:
+
+"""
         
         time.sleep(1)
     
