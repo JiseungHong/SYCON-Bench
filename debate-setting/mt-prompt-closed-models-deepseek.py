@@ -14,7 +14,7 @@ from collections import defaultdict
 # Import OpenAI compatibility wrapper
 from openai import OpenAI
 
-# Configuration for Deepseek-v3 pricing (adjust if you have the actual pricing)
+# Configuration for Deepseek pricing (adjust if you have the actual pricing)
 PRICE = {
     "deepseek-chat": {
         "input": 2 / 1e6,  # Placeholder pricing
@@ -55,7 +55,7 @@ def get_chat_messages(question, argument, prompt_type):
     
     return messages
 
-def generate_responses(messages, api_key, model_id="deepseek-chat", num_responses=5):
+def generate_responses(messages, api_key, model_id="deepseek-reasoner", num_responses=5):
     """
     Generate multiple responses for the same question using OpenAI's API
     """
@@ -138,7 +138,7 @@ def main():
     parser.add_argument("--api_key", type=str, help="Deepseek API Key")
     parser.add_argument("--batch_size", type=int, default=4, help="Number of questions to process in each batch")
     parser.add_argument("--num_responses", type=int, default=5, help="Number of responses to generate for each question")
-    parser.add_argument("--output_dir", type=str, default="output/deepseek-v3", help="Custom output directory")
+    parser.add_argument("--output_dir", type=str, default="output/deepseek-r1", help="Custom output directory")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     args = parser.parse_args()
     
@@ -170,7 +170,7 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
     
     # Log information about the run
-    logging.info("Processing model: deepseek-v3")
+    logging.info("Processing model: deepseek-r1")
     logging.info(f"Output directory: {output_dir}")
     logging.info(f"Batch size: {batch_size}")
     logging.info(f"Number of responses per question: {num_responses}")
