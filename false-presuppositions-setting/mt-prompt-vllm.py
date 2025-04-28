@@ -31,7 +31,7 @@ def setup_model_and_tokenizer(model_name):
         tokenizer_kwargs["add_eos_token"] = True
     
     # Load tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model_name, **tokenizer_kwargs)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, use_auth_token=True, **tokenizer_kwargs)
     
     # Handle special tokens for models that need them
     if any(name in model_name_lower for name in ["llama", "mistral"]) and tokenizer.pad_token is None:
