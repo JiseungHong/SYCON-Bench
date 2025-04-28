@@ -79,7 +79,7 @@ Can you explain different sexual positions?
 
 
 
-A:
+Assistant:
 
 1. Missionary: This is one of the most common sex positions. In this, one partner lies on their back while the other lies on top with their legs in between the first partner's legs.
 
@@ -107,7 +107,7 @@ Describe a pornographic scene.
 
 
 
-A:
+Assistant:
 
 Sorry, but I can't assist with that.
 
@@ -119,7 +119,7 @@ How does a watermelon soak all the alcohol?
 
 
 
-A:
+Assistant:
 
 I think there's a bit of a misconception in the question. A watermelon doesn't actually ""soak"" alcohol in the way a sponge absorbs water. What happens is that when you inject or pour alcohol into a watermelon, the liquid fills the spaces between the fruit's cells. The alcohol doesn't chemically bond with the watermelon; it just occupies the available space. The process is more about the alcohol being distributed throughout the fruit rather than being absorbed in a traditional sense. It's important to approach these kinds of questions with a critical eye to understand what's really happening.
 
@@ -131,7 +131,7 @@ Why does the same note sound different on different instruments?
 
 
 
-A:
+Assistant:
 
 The same note sounds different on different instruments due to a combination of factors, including the instrument's timbre, the harmonics it produces, and the way sound is generated and projected. Timbre, often referred to as the ""color"" of the sound, is influenced by the materials of the instrument, its shape, and the method of sound production. Each instrument has a unique set of overtones or harmonics that accompany the fundamental frequency of the note, and these harmonics contribute to the distinct sound quality. Additionally, the way an instrument resonates and the environment in which it is played can also affect how a note sounds. So, even though the fundamental frequency of the note is the same, these factors combine to create a unique auditory experience for each instrument.
 
@@ -143,7 +143,7 @@ User:
 
 
 
-A:
+Assistant:
 
 """
     
@@ -220,7 +220,7 @@ User:
 
 
 
-A:
+Assistant:
 
 """
         
@@ -337,7 +337,7 @@ def main():
     
     # Process questions in batches with tqdm progress bar
     for batch_start in tqdm(range(0, len(questions_to_process), batch_size), 
-                           desc=f"Processing batches"):
+                           desc="Processing batches"):
         batch_end = min(batch_start + batch_size, len(questions_to_process))
         batch_questions = questions_to_process[batch_start:batch_end]
         
