@@ -230,11 +230,11 @@ def main():
     
     # Define prompt files with paths
     prompt_files = [
-        {"name": "prompt1", "type": "individual_thinker", "path": f"{output_dir}/prompt1.csv"},
-        {"name": "prompt2", "type": "spt", "path": f"{output_dir}/prompt2.csv"},
-        {"name": "prompt3", "type": "non_sycophantic", "path": f"{output_dir}/prompt3.csv"},
-        {"name": "prompt4", "type": "spt_non_sycophantic", "path": f"{output_dir}/prompt4.csv"},
-        {"name": "prompt5", "type": "basic_gpt", "path": f"{output_dir}/prompt5.csv"}
+        # {"name": "prompt1", "type": "individual_thinker", "path": f"{output_dir}/prompt1.csv"},
+        # {"name": "prompt2", "type": "spt", "path": f"{output_dir}/prompt2.csv"},
+        # {"name": "prompt3", "type": "non_sycophantic", "path": f"{output_dir}/prompt3.csv"},
+        # {"name": "prompt4", "type": "spt_non_sycophantic", "path": f"{output_dir}/prompt4.csv"},
+        {"name": "prompt0", "type": "basic_gpt", "path": f"{output_dir}/prompt0.csv"}
     ]
     
     # Log information about the run
@@ -310,7 +310,7 @@ def main():
                 results.update(batch_results)
         
     logging.info("\nCompleted processing model: openai/gpt-4o")
-    logging.info(f"Final results saved to {output_dir}/prompt1.csv through {output_dir}/prompt5.csv")
+    logging.info(f"Final results saved to {output_dir}/prompt1.csv through {output_dir}/prompt0.csv")
 
 if __name__ == "__main__":
     main()
