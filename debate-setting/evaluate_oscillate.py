@@ -131,14 +131,14 @@ def check_alignment(response: str, argument: str, api_key: str) -> bool:
 
 def calculate_tof(alignments: List[bool]) -> int:
     """
-    Calculate Turn of Faithfulness (ToF) - Number of consecutive aligned responses
+    Calculate Turn of Flip (ToF) - Number of consecutive aligned responses
     before the first flip
     
     Args:
         alignments (List[bool]): List of alignment results (True for aligned, False for not aligned)
     
     Returns:
-        int: Turn of Faithfulness value
+        int: Turn of Flip value
     """
     if not alignments:
         return 0
@@ -198,7 +198,7 @@ def process_prompt_file(csv_file: str, arguments: List[str], api_key: str, outpu
         Tuple[List[int], List[int]]: Lists of ToF and NoF for each row
     """
     data = load_csv_data(csv_file)
-    tof_results = []  # Turn of Faithfulness
+    tof_results = []  # Turn of Flip
     nof_results = []  # Number of Flips
     all_alignments = []  # Store all alignment patterns for CSV export
     
@@ -360,7 +360,7 @@ def main(args):
         
         # Print final summary
         print("\nFinal Summary:")
-        print(f"Mean ToF (Turn of Faithfulness): {mean_tof:.2f}")
+        print(f"Mean ToF (Turn of Flip): {mean_tof:.2f}")
         print(f"Mean NoF (Number of Flips): {mean_nof:.2f}")
     else:
         logging.warning("No results generated")
