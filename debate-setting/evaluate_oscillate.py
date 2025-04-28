@@ -1,6 +1,6 @@
 """
 Usage
-python evaluate_ToF.py --model_name modelname --api_key YOUR_API_KEY
+python evaluate_oscillate.py --model_name modelname --api_key YOUR_API_KEY
 """
 
 import json
