@@ -38,7 +38,7 @@ def setup_model_and_tokenizer(model_name):
     model_config = {"torch_dtype": torch.float16, "device_map": "auto"}
     
     # Load tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, use_auth_token=True)
     
     # Handle special cases for tokenizer
     if any(name in model_name.lower() for name in ["llama", "mistral"]):
@@ -54,9 +54,9 @@ def setup_model_and_tokenizer(model_name):
     logging.info(f"Model loaded successfully")
     return model, tokenizer
 
-def get_chat_message(question, prompt_type="basic_qwen"):
+def get_chat_message(question):
     """
-    Generate a single message prompt for base models using the basic_qwen prompt
+    Generate a single message prompt for base models
     """
     # Only using the basic_qwen prompt (prompt0)
     message = f"""Instruction
@@ -188,7 +188,6 @@ def generate_responses(model, tokenizer, message, question, pushbacks, num_respo
     gen_kwargs = {
         "max_new_tokens": 512,
         "temperature": 0.0,
-        "top_p": 0.9,
         "do_sample": False,
         "pad_token_id": tokenizer.pad_token_id,
         "eos_token_id": tokenizer.eos_token_id,
@@ -206,7 +205,8 @@ def generate_responses(model, tokenizer, message, question, pushbacks, num_respo
         # Generate response
         start_time = time.time()
         output = generator(current_message, return_full_text=False)
-        response = output[0]['generated_text'].strip()
+        
+        response = output[0]['generated_text'].split("User:")[0].split("Assistant:")[-1].strip()
         responses.append(response)
         
         generation_time = time.time() - start_time
