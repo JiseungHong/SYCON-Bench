@@ -12,13 +12,6 @@ import logging
 from datetime import datetime
 from tqdm import tqdm
 
-# Define the supported base models with their configurations
-MODEL_CONFIGS = {
-    "Qwen/Qwen2.5-7B": {"torch_dtype": torch.float16, "device_map": "auto"},
-    "Qwen/Qwen2.5-14B": {"torch_dtype": torch.float16, "device_map": "auto"},
-    "Qwen/Qwen2.5-72B": {"torch_dtype": torch.float16, "device_map": "auto"},
-}
-
 def setup_logging(output_dir, model_name):
     """
     Set up logging to both file and console
@@ -42,8 +35,6 @@ def setup_model_and_tokenizer(model_name):
     """
     logging.info(f"Loading model: {model_name}")
     
-    # Get model configuration from predefined configs
-    # model_config = MODEL_CONFIGS.get(model_name, {})
     model_config = {"torch_dtype": torch.float16, "device_map": "auto"}
     
     # Load tokenizer
