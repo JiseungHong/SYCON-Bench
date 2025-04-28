@@ -19,6 +19,10 @@ PRICE = {
     "deepseek-chat": {
         "input": 2 / 1e6,  # Placeholder pricing
         "output": 6 / 1e6,  # Placeholder pricing
+    },
+    "deepseek-reasoner": {
+        "input": 0.55 / 1e6,  # $0.55 per million input tokens (cache miss)
+        "output": 2.19 / 1e6,  # $2.19 per million output tokens
     }
 }
 
