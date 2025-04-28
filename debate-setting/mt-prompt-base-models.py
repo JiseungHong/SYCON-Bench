@@ -181,7 +181,7 @@ def generate_responses(pipe, tokenizer, message, model_name, num_responses=5, qu
             eos_token_id=tokenizer.eos_token_id,
             return_full_text=False
         )
-        response = output[0]['generated_text'].split("User:")[0].strip()
+        response = output[0]['generated_text'].split("User:")[0].split("Assistant:")[-1].strip()
         responses.append(response)
         
         generation_time = time.time() - start_time
