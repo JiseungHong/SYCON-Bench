@@ -4,7 +4,7 @@ false_presupposition_question_extractor.py
 
 This script extracts questions that contain false presuppositions from a JSONL file.
 It processes test.jsonl and extracts up to 200 randomly selected questions to questions.txt,
-their corresponding presuppositions to presuppositions.txt, and corrections to corrections.txt
+their corresponding presuppositions to presuppositions.json, and corrections to corrections.json
 when both strings in "raw_labels" are "false presupposition".
 """
 
@@ -12,15 +12,21 @@ import json
 import sys
 import random
 
-def extract_false_presupposition_questions(input_file, questions_file, presuppositions_file, corrections_file, max_questions=200):
+def extract_false_presupposition_questions(
+    input_file, 
+    questions_file, 
+    presuppositions_file, 
+    corrections_file, 
+    max_questions=200
+):
     """
     Extract up to max_questions randomly selected questions with false presuppositions from the input JSONL file.
     
     Args:
         input_file (str): Path to the input JSONL file
         questions_file (str): Path to output file for questions
-        presuppositions_file (str): Path to output file for presuppositions
-        corrections_file (str): Path to output file for corrections
+        presuppositions_file (str): Path to output JSON file for presuppositions
+        corrections_file (str): Path to output JSON file for corrections
         max_questions (int): Maximum number of questions to extract
     
     Raises:
@@ -47,16 +53,11 @@ def extract_false_presupposition_questions(input_file, questions_file, presuppos
                     if not presuppositions:
                         raise ValueError(f"Error on line {line_num}: Both strings in 'raw_labels' are 'false presupposition' but 'presuppositions' is empty")
                     
-                    # Make sure corrections exists
-                    if not corrections:
-                        print(f"Warning on line {line_num}: 'corrections' is empty", file=sys.stderr)
-                        continue
-                    
                     # Add to eligible entries
                     eligible_entries.append({
                         "question": question,
-                        "presupposition": presuppositions[0],
-                        "correction": corrections[0] if corrections else ""
+                        "presuppositions": presuppositions,
+                        "corrections": corrections if corrections else []
                     })
             
             except json.JSONDecodeError:
@@ -73,15 +74,20 @@ def extract_false_presupposition_questions(input_file, questions_file, presuppos
     else:
         selected_entries = eligible_entries
     
-    # Write selected entries to output files
-    with open(questions_file, 'w', encoding='utf-8') as f_questions, \
-         open(presuppositions_file, 'w', encoding='utf-8') as f_presuppositions, \
-         open(corrections_file, 'w', encoding='utf-8') as f_corrections:
-        
+    # Write selected questions to the text file
+    with open(questions_file, 'w', encoding='utf-8') as f_questions:
         for entry in selected_entries:
             f_questions.write(f"{entry['question']}\n")
-            f_presuppositions.write(f"{entry['presupposition']}\n")
-            f_corrections.write(f"{entry['correction']}\n")
+    
+    # Write presuppositions to the JSON file (each line is a JSON array)
+    with open(presuppositions_file, 'w', encoding='utf-8') as f_presuppositions:
+        for entry in selected_entries:
+            f_presuppositions.write(json.dumps(entry['presuppositions']) + "\n")
+    
+    # Write corrections to the JSON file (each line is a JSON array)
+    with open(corrections_file, 'w', encoding='utf-8') as f_corrections:
+        for entry in selected_entries:
+            f_corrections.write(json.dumps(entry['corrections']) + "\n")
 
     return len(selected_entries)
 
@@ -91,8 +97,8 @@ def main():
     
     input_file = "test.jsonl"
     questions_file = "questions.txt"
-    presuppositions_file = "presuppositions.txt"
-    corrections_file = "corrections.txt"
+    presuppositions_file = "presuppositions.json"
+    corrections_file = "corrections.json"
     max_questions = 200
     
     try:
