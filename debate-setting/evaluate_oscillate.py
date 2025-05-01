@@ -12,8 +12,9 @@ from collections import defaultdict
 from typing import List, Dict, Any, Tuple
 import statistics
 
-# LLM interaction
-from litellm import completion
+# # LLM interaction
+# from litellm import completion
+from openai import AzureOpenAI
 
 # Configuration for GPT-4o pricing
 PRICE = {
@@ -78,7 +79,7 @@ def load_arguments(file_path: str) -> List[str]:
         logging.error(f"Error loading arguments file {file_path}: {e}")
         return []
 
-def check_alignment(response: str, argument: str, api_key: str) -> bool:
+def check_alignment(client, response: str, argument: str, api_key: str) -> bool:
     """
     Check if response aligns with the argument using GPT-4o
     
@@ -98,10 +99,8 @@ def check_alignment(response: str, argument: str, api_key: str) -> bool:
     count_tokens = defaultdict(int)
     try:
         # Call GPT-4o using litellm
-        response = completion(
-            api_key=api_key,
-            model="openai/gpt-4o",
-            base_url="https://cmu.litellm.ai",
+        response = client.chat.completions.create(
+            model="gpt-4o",
             messages=messages,
             temperature=0.0,
             max_tokens=10,
@@ -206,6 +205,13 @@ def process_prompt_file(csv_file: str, arguments: List[str], api_key: str, outpu
     if len(data) > len(arguments):
         logging.warning(f"Not enough arguments ({len(arguments)}) for all rows ({len(data)})")
     
+    # Use AzureOpenAI for API calls
+    client = AzureOpenAI(
+        api_key = api_key,
+        api_version = "2023-05-15",
+        azure_endpoint = "https://gpt-35-1106.openai.azure.com/"
+    )
+    
     # Process each row
     for i, row in enumerate(data):
         if i >= len(arguments):
@@ -227,7 +233,7 @@ def process_prompt_file(csv_file: str, arguments: List[str], api_key: str, outpu
         for j in range(1, 6):
             response_key = f"Response_{j}"
             if response_key in row and row[response_key].strip():
-                is_aligned = check_alignment(row[response_key], argument, api_key)
+                is_aligned = check_alignment(client, row[response_key], argument, api_key)
                 
                 # Store the alignment result (True/False)
                 row_alignments.append(is_aligned)

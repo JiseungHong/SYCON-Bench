@@ -8,9 +8,10 @@ import csv
 import os
 import logging
 from argparse import ArgumentParser
-from litellm import completion
 from typing import List, Dict
 import time
+
+import openai
 
 def setup_logging(verbose: bool = False):
     """Set up logging configuration"""
@@ -96,18 +97,18 @@ Each pushback should be concise (1-3 sentences) and natural-sounding from a user
     ]
     
     try:
-        # Call GPT-4o using litellm
-        response = completion(
-            api_key=api_key,
-            model="openai/gpt-4o",
-            base_url="https://cmu.litellm.ai",
+        openai.api_key = api_key  # Set the OpenAI API key
+
+        # Call OpenAI API
+        response = openai.ChatCompletion.create(
+            model="gpt-4o",
             messages=messages,
             temperature=0.0,
-            max_tokens=1024,
+            max_tokens=1024
         )
         
         # Process the response to extract the 4 pushbacks
-        content = response.choices[0].message.content.strip()
+        content = response.choices[0].message['content'].strip()
         
         # Parse the content - looking for numbered items
         pushbacks = []

@@ -13,8 +13,9 @@ from typing import List, Dict, Any, Tuple
 import statistics
 from tqdm import tqdm
 
-# LLM interaction
-from litellm import completion
+# # LLM interaction
+# from litellm import completion
+from openai import AzureOpenAI
 
 # Configuration for GPT-4o pricing
 PRICE = {
@@ -79,7 +80,7 @@ def load_questions(file_path: str) -> List[str]:
         logging.error(f"Error loading questions file {file_path}: {e}")
         return []
 
-def check_false_presupposition_handling(response: str, question: str, api_key: str) -> bool:
+def check_false_presupposition_handling(client, response: str, question: str) -> bool:
     """
     Check if response identifies the false presupposition in the question
     
@@ -98,11 +99,18 @@ def check_false_presupposition_handling(response: str, question: str, api_key: s
     
     count_tokens = defaultdict(int)
     try:
-        # Call GPT-4o using litellm
-        response = completion(
-            api_key=api_key,
-            model="openai/gpt-4o",
-            base_url="https://cmu.litellm.ai",
+        # # Call GPT-4o using litellm
+        # response = completion(
+        #     api_key=api_key,
+        #     model="openai/gpt-4o",
+        #     base_url="https://cmu.litellm.ai",
+        #     messages=messages,
+        #     temperature=0.0,
+        #     max_tokens=10,
+        # )
+        
+        response = client.chat.completions.create(
+            model="gpt-4o",
             messages=messages,
             temperature=0.0,
             max_tokens=10,
@@ -239,11 +247,19 @@ def process_prompt_file(csv_file: str, questions: List[str], api_key: str, outpu
         row_evaluations = []
         first_flip_found = False
         
+        # Use AzureOpenAI for API calls
+        client = AzureOpenAI(
+            api_key = api_key,
+            api_version = "2023-05-15",
+            azure_endpoint = "https://gpt-35-1106.openai.azure.com/"
+        )
+        
         # Check each response column
         for j in range(1, 6):
             response_key = f"Response_{j}"
             if response_key in row and row[response_key].strip():
-                identified_presupposition = check_false_presupposition_handling(row[response_key], question, api_key)
+                # identified_presupposition = check_false_presupposition_handling(row[response_key], question, api_key)
+                identified_presupposition = check_false_presupposition_handling(client, row[response_key], question)
                 
                 # Store result (1 for identified, 0 for not identified)
                 evaluation_value = 1 if identified_presupposition else 0
