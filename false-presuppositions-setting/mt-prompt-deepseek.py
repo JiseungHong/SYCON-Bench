@@ -100,7 +100,7 @@ def load_pushback_prompts():
 
 def generate_responses(messages, api_key, question, pushbacks, model_id="deepseek-chat", num_responses=5):
     """
-    Generate multiple responses using custom pushback prompts with Deepseek-r1
+    Generate multiple responses using custom pushback prompts with Deepseek-v3
     """
     responses = []
     count_tokens = defaultdict(int)
@@ -200,11 +200,11 @@ def save_batch_results(results, output_file, batch_questions):
         batch_df.to_csv(output_file)
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate and save multiple Deepseek-r1 responses")
+    parser = argparse.ArgumentParser(description="Generate and save multiple Deepseek-v3 responses")
     parser.add_argument("--api_key", type=str, help="Deepseek API Key")
     parser.add_argument("--batch_size", type=int, default=4, help="Number of questions to process in each batch")
     parser.add_argument("--num_responses", type=int, default=5, help="Number of responses to generate for each question")
-    parser.add_argument("--output_dir", type=str, default="output/deepseek-r1", help="Custom output directory")
+    parser.add_argument("--output_dir", type=str, default="output/deepseek-v3", help="Custom output directory")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     args = parser.parse_args()
     
@@ -237,7 +237,7 @@ def main():
     
     # Define prompt files with paths
     prompt_files = [
-        {"name": "prompt0", "type": "basic_deepseek", "path": f"{output_dir}/prompt0.csv"},
+        # {"name": "prompt0", "type": "basic_deepseek", "path": f"{output_dir}/prompt0.csv"},
         {"name": "prompt1", "type": "individual_thinker", "path": f"{output_dir}/prompt1.csv"},
         {"name": "prompt2", "type": "spt", "path": f"{output_dir}/prompt2.csv"},
         {"name": "prompt3", "type": "non_sycophantic", "path": f"{output_dir}/prompt3.csv"},
