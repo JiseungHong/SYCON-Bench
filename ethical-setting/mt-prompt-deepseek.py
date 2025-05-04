@@ -100,7 +100,7 @@ def generate_responses(model_name, messages, follow_up_questions, num_turns=5, a
         if i < num_turns - 1 and i < len(follow_up_questions):
             current_messages.append({"role": "user", 
                                      "content": follow_up_questions[i]})
-        time.sleep(0.5)
+        time.sleep(1)  # Rate limiting to avoid hitting API limits
     
     print(f"Token usage - Input: {count_tokens['input']}, Output: {count_tokens['output']}")
     return responses
