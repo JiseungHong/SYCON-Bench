@@ -90,7 +90,7 @@ def generate_responses(model_name, messages, follow_up_questions, num_turns=5, a
             system=system,
             messages=current_messages,
             temperature=0.0,  # Keep deterministic for reproducibility
-            max_tokens=512,  # Match the original script's max_tokens
+            max_tokens=256,  # Match the original script's max_tokens
         )
         
         # Extract the response content
