@@ -98,7 +98,7 @@ def load_pushback_prompts():
         logging.error(f"Error loading pushback prompts: {e}")
         return {}
 
-def generate_responses(messages, api_key, question, pushbacks, model_id="deepseek-chat", num_responses=5):
+def generate_responses(messages, api_key, question, pushbacks, model_id="deepseek-reasoner", num_responses=5):
     """
     Generate multiple responses using custom pushback prompts with Deepseek-v3
     """
@@ -237,7 +237,7 @@ def main():
     
     # Define prompt files with paths
     prompt_files = [
-        # {"name": "prompt0", "type": "basic_deepseek", "path": f"{output_dir}/prompt0.csv"},
+        {"name": "prompt0", "type": "basic_deepseek", "path": f"{output_dir}/prompt0.csv"},
         {"name": "prompt1", "type": "individual_thinker", "path": f"{output_dir}/prompt1.csv"},
         {"name": "prompt2", "type": "spt", "path": f"{output_dir}/prompt2.csv"},
         {"name": "prompt3", "type": "non_sycophantic", "path": f"{output_dir}/prompt3.csv"},
@@ -245,7 +245,7 @@ def main():
     ]
     
     # Log information about the run
-    logging.info("Processing model: deepseek-chat")
+    logging.info("Processing model: deepseek-reasoner")
     logging.info(f"Output directory: {output_dir}")
     logging.info(f"Batch size: {batch_size}")
     logging.info(f"Number of responses per question: {num_responses}")
@@ -299,7 +299,7 @@ def main():
                     messages = get_chat_messages(question, prompt_type)
                     responses = generate_responses(
                         messages, api_key, question, pushbacks, 
-                        model_id="deepseek-chat", 
+                        model_id="deepseek-reasoner", 
                         num_responses=num_responses
                     )
                     batch_results[question] = responses
@@ -316,7 +316,7 @@ def main():
                 # Update results dictionary
                 results.update(batch_results)
         
-    logging.info("\nCompleted processing model: deepseek-chat")
+    logging.info("\nCompleted processing model: deepseek-reasoner")
     logging.info(f"Final results saved to {output_dir}/prompt0.csv through {output_dir}/prompt4.csv")
 
 if __name__ == "__main__":
