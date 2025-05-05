@@ -2,18 +2,16 @@ import os
 import argparse
 import pandas as pd
 import time
-from openai import OpenAI  # Import OpenAI compatibility wrapper
+from openai import AzureOpenAI
 
-# DeepSeek model system prompts
-DEEPSEEK_SYSTEM_PROMPTS = {
-    "deepseek-chat": "You are a helpful, honest, and harmless assistant.",
-    "deepseek-reasoner": "You are a helpful, honest, and harmless assistant."
+# GPT model system prompts
+GPT_SYSTEM_PROMPTS = {
+    "o3-mini": "You are a helpful assistant."
 }
 
-# DeepSeek model mappings (for API endpoints)
-DEEPSEEK_MODEL_MAPPING = {
-    "deepseek-chat": "deepseek-chat",
-    "deepseek-reasoner": "deepseek-reasoner"
+# GPT model mappings (for API endpoints)
+GPT_MODEL_MAPPING = {
+    "o3-mini": "o3-mini"
 }
 
 def get_chat_messages(questions, prompt_type, model_name=None):
@@ -21,9 +19,9 @@ def get_chat_messages(questions, prompt_type, model_name=None):
     Generate message-based prompts for multi-turn conversation
     """
     if prompt_type == "prompt0":
-        # Basic DeepSeek prompt for prompt0
-        system_msg = DEEPSEEK_SYSTEM_PROMPTS.get(model_name, 
-                                                "You are a helpful, honest, and harmless assistant.")
+        # Basic GPT prompt for prompt0
+        system_msg = GPT_SYSTEM_PROMPTS.get(model_name, 
+                                           "You are a helpful assistant.")
         messages = [
             {"role": "system", "content": system_msg},
             {"role": "user", "content": f"Please answer the following question in 250 words.\n\nQuestion: {questions[0]}\n\nAnswer:"}
@@ -59,50 +57,31 @@ def get_chat_messages(questions, prompt_type, model_name=None):
 
 def generate_responses(model_name, messages, follow_up_questions, num_turns=5, api_key=None):
     """
-    Generate responses using the OpenAI API compatible endpoint for DeepSeek models
+    Generate responses using the Azure OpenAI API for GPT models
     """
     responses = []
     current_messages = messages.copy()
     
-    # Get the correct model ID for the DeepSeek API
-    model_id = DEEPSEEK_MODEL_MAPPING.get(model_name, model_name)
+    # Get the correct model ID for the API
+    model_id = GPT_MODEL_MAPPING.get(model_name, model_name)
     
-    # Initialize token counting
-    count_tokens = {"input": 0, "output": 0}
-    
-    # Initialize OpenAI client with DeepSeek base URL
-    client = OpenAI(
-        api_key=api_key or os.environ.get("DEEPSEEK_API_KEY", ""),
-        base_url="https://api.deepseek.com"
-    )
+    # Initialize OpenAI client with Azure configuration
+    client = AzureOpenAI(
+            api_key = api_key,
+            api_version = "2023-05-15",
+            azure_endpoint = "https://gpt-35-1106.openai.azure.com/"
+        )
     
     for i in range(num_turns):
         print(f"Turn {i+1} messages: {current_messages}")
         
-        retry = 0
-        while retry <= 3:
-            try:
-                # Make API call using OpenAI client
-                response = client.chat.completions.create(
-                    model=model_id,
-                    messages=current_messages,
-                    temperature=0.0,  # Keep deterministic for reproducibility
-                    max_tokens=512,
-                )
-                break  # Exit retry loop if successful
-            except Exception as e:
-                print(f"API call failed: {e}. Retrying...")
-                retry += 1
-                time.sleep(2 ** retry)  # Exponential backoff on failure
-                
-                if retry > 3:
-                    print(f"Max retries exceeded for turn {i+1}. Giving up.")
-                    raise e
-        
-        # Track token usage
-        count_tokens["input"] += response.usage.prompt_tokens
-        count_tokens["output"] += response.usage.completion_tokens
-        
+        # Make API call using Azure OpenAI client
+        response = client.chat.completions.create(
+            model="o3-mini",
+            messages=current_messages,
+            temperature=0.0,  # Keep deterministic for reproducibility
+            max_tokens=256,
+        )
         # Extract the response content
         generated_text = response.choices[0].message.content.strip()
         responses.append(generated_text)
@@ -114,7 +93,6 @@ def generate_responses(model_name, messages, follow_up_questions, num_turns=5, a
                                      "content": follow_up_questions[i]})
         time.sleep(1)  # Rate limiting to avoid hitting API limits
     
-    print(f"Token usage - Input: {count_tokens['input']}, Output: {count_tokens['output']}")
     return responses
     
 def save_batch_results(results, output_file, batch_rows):
@@ -139,26 +117,24 @@ def save_batch_results(results, output_file, batch_rows):
         batch_df.to_csv(output_file)
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate and save multiple DeepSeek model responses")
-    parser.add_argument("--model_name", type=str, default="deepseek-reasoner", 
-                       help="DeepSeek model type ('deepseek-chat' or 'deepseek-reasoner')")
+    parser = argparse.ArgumentParser(description="Generate and save multiple GPT model responses")
     parser.add_argument("--batch_size", type=int, default=1, 
                        help="Number of questions to process in each batch")
     parser.add_argument("--output_dir", type=str, default=None, 
                        help="Custom output directory")
     parser.add_argument("--api_key", type=str, default=None, 
-                       help="API key for DeepSeek API")
+                       help="API key for Azure OpenAI API")
     # Add new parameter for starting index
     parser.add_argument("--start_index", type=int, default=0, 
                        help="Index of the first question to process (0-based)")
     args = parser.parse_args()
     
-    model_name = args.model_name
+    model_name = "o3-mini"
     batch_size = args.batch_size
     start_index = args.start_index  # Get the starting index
     
     # Verify model name is one of the supported models
-    if model_name not in DEEPSEEK_MODEL_MAPPING:
+    if model_name not in GPT_MODEL_MAPPING:
         print(f"Warning: Model name '{model_name}' not recognized. Using as-is.")
     
     # Create a shorter model identifier for directory names
@@ -210,8 +186,8 @@ def main():
             
             all_questions = [row["question"]] + follow_up_questions
 
-            # Process prompt0: Basic DeepSeek prompt (system prompt + question)
-            print(f"Processing prompt0 (basic DeepSeek) for question: {row['question']}")
+            # Process prompt0: Basic GPT prompt (system prompt + question)
+            print(f"Processing prompt0 (basic GPT) for question: {row['question']}")
             messages = get_chat_messages([row["question"]], "prompt0", model_name)
             responses = generate_responses(model_name, messages, follow_up_questions, api_key=args.api_key)
             prompt0_results[row["question"]] = responses

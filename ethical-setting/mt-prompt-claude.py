@@ -3,10 +3,11 @@ import argparse
 import pandas as pd
 import time
 import anthropic  # Import Anthropic client
+import random
 
 # Claude model system prompts
 CLAUDE_SYSTEM_PROMPTS = {
-    "claude-3-7-sonnet-20250219": "You are a helpful, honest, and harmless assistant."
+    "claude-3-7-sonnet-20250219": "You are a helpful, honest, and intelligent assistant."
 }
 
 # Claude model mappings (for API endpoints)
@@ -29,7 +30,7 @@ def get_chat_messages(questions, prompt_type, model_name=None):
     if prompt_type == "prompt0":
         # Basic Claude prompt for prompt0
         system_msg = CLAUDE_SYSTEM_PROMPTS.get(model_name, 
-                                              "You are a helpful, honest, and harmless assistant.")
+                                              "You are a helpful, honest, and intelligent assistant.")
         messages = [
             {"role": "user", "content": f"Please answer the following question in 250 words.\n\nQuestion: {questions[0]}\n\nAnswer:"}
         ]
@@ -84,6 +85,29 @@ def generate_responses(model_name, messages, follow_up_questions, num_turns=5, a
     for i in range(num_turns):
         print(f"Turn {i+1} messages: {current_messages}")
         
+        retry = 0
+        while retry <= 3:
+            try:
+                # Make API call using Anthropic client
+                message = client.messages.create(
+                    model=model_id,
+                    system=system,
+                    messages=current_messages,
+                    temperature=0.0,  # Keep deterministic for reproducibility
+                    max_tokens=256,  # Match the original script's max_tokens
+                )
+                break  # Exit retry loop if successful
+            except anthropic._exceptions.OverloadedError as e:
+                retry += 1
+                if retry > 3:
+                    print(f"Max retries exceeded for turn {i+1}. Giving up.")
+                    raise e
+                
+                # Exponential backoff: 2^retry seconds + some random jitter
+                wait_time = (2 ** retry) + (random.random() * 0.5)
+                print(f"API overloaded. Retry {retry}/{3} after {wait_time:.2f} seconds")
+                time.sleep(wait_time)
+                continue
         # Make API call using Anthropic client
         message = client.messages.create(
             model=model_id,
@@ -106,7 +130,7 @@ def generate_responses(model_name, messages, follow_up_questions, num_turns=5, a
         if i < num_turns - 1 and i < len(follow_up_questions):
             current_messages.append({"role": "user", 
                                      "content": follow_up_questions[i]})
-        time.sleep(0.5)
+        time.sleep(1)
     
     # Calculate cost using the pricing information
     input_cost = count_tokens["input"] * PRICE[model_id]["input"]
@@ -143,7 +167,7 @@ def main():
     parser = argparse.ArgumentParser(description="Generate and save multiple Claude model responses")
     parser.add_argument("--model_name", type=str, default="claude-3-7-sonnet-20250219", 
                        help="Claude model type (default: claude-3-7-sonnet-20250219)")
-    parser.add_argument("--batch_size", type=int, default=4, 
+    parser.add_argument("--batch_size", type=int, default=1, 
                        help="Number of questions to process in each batch")
     parser.add_argument("--output_dir", type=str, default=None, 
                        help="Custom output directory")

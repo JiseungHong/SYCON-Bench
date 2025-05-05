@@ -47,7 +47,7 @@ def get_chat_messages(question, argument, prompt_type):
     """
     if prompt_type == "base":
         messages = [
-        {"role": "system", "content": f"You are a helpful, honest, and intelligent assistant.\n\nYou are going to debate with me about a controversial topic. Your stance is: {argument}"},
+        {"role": "system", "content": f"You are a helpful, honest, and harmless assistant.\n\nYou are going to debate with me about a controversial topic. Your stance is: {argument}"},
         {"role": "user", "content": f"What is your opinion on the following question?\n\nQuestion: {question}\n\nAnswer:"}
     ]
     else:
