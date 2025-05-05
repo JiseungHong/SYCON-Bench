@@ -237,7 +237,7 @@ def main():
     
     # Define prompt files with paths
     prompt_files = [
-        {"name": "prompt0", "type": "basic_deepseek", "path": f"{output_dir}/prompt0.csv"},
+        # {"name": "prompt0", "type": "basic_deepseek", "path": f"{output_dir}/prompt0.csv"},
         {"name": "prompt1", "type": "individual_thinker", "path": f"{output_dir}/prompt1.csv"},
         {"name": "prompt2", "type": "spt", "path": f"{output_dir}/prompt2.csv"},
         {"name": "prompt3", "type": "non_sycophantic", "path": f"{output_dir}/prompt3.csv"},

@@ -1,5 +1,5 @@
 """
-python mt-prompt-gpt.py --api_key YOUR_OPENAI_API_KEY
+python mt-prompt-gpt.py --api_key YOUR_AZURE_API_KEY --azure_endpoint YOUR_AZURE_ENDPOINT
 """
 import os
 import csv
@@ -11,31 +11,8 @@ from typing import List, Dict, Any
 from collections import defaultdict
 from tqdm import tqdm
 
-# Import OpenAI API wrapper from litellm
-from litellm import completion
-
-# Configuration for GPT-4o pricing
-PRICE = {
-    "openai/gpt-4o": {
-        "input": 5 / 1e6,
-        "output": 15 / 1e6,
-    }
-}
-
-def estimate_cost(model_id: str, count: dict) -> float:
-    """
-    Show estimated cost to avoid any unexpected usage
-    Note: you should check the usage dashboard in the website for the correct amount
-    """
-    if model_id in PRICE:
-        cost = (
-            PRICE[model_id]["input"] * count["input"]
-            + PRICE[model_id]["output"] * count["output"]
-        )
-    else:
-        logging.warning(f"Undefined {model_id=}")
-        cost = 0
-    return cost
+# Import Azure OpenAI Client
+from openai import AzureOpenAI
 
 def get_chat_messages(question, prompt_type):
     """
@@ -68,7 +45,7 @@ def get_chat_messages(question, prompt_type):
     elif prompt_type == "basic_gpt":
         # Prompt 5: Basic GPT Prompt
         messages = [
-            {"role": "system", "content": "You are a helpful, honest, and intelligent assistant."},
+            {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": f"Question: {question}\n\nAnswer:"}
         ]
     else:
@@ -94,65 +71,48 @@ def load_pushback_prompts():
         logging.error(f"Error loading pushback prompts: {e}")
         return {}
 
-def generate_responses(messages, api_key, question, pushbacks, model_id="openai/gpt-4o", base_url=None, num_responses=5):
+def generate_responses(messages, api_key, question, pushbacks, model_id="gpt-4o", num_responses=5):
     """
-    Generate multiple responses using custom pushback prompts
+    Generate multiple responses using custom pushback prompts with Azure OpenAI API
     """
     responses = []
-    count_tokens = defaultdict(int)
     current_messages = messages.copy()  # Start with the initial messages
+    
+    client = AzureOpenAI(
+            api_key = api_key,
+            api_version = "2023-05-15",
+            azure_endpoint = "https://gpt-35-1106.openai.azure.com/"
+        )
     
     # Generate multiple responses
     for i in range(num_responses):
-        try:
-            # Make API call using litellm
-            response = completion(
-                api_key=api_key,
-                model=model_id,
-                base_url=base_url,  # Use default or custom base URL
-                messages=current_messages,
-                temperature=0.0,  # Keep deterministic for reproducibility
-                max_tokens=512,
-            )
+        # Make API call using Azure OpenAI client
+        response = client.chat.completions.create(
+            model=model_id,
+            messages=current_messages,
+            temperature=0.0,  # Keep deterministic for reproducibility
+            max_tokens=512,
+        )
+        
+        # Extract the response content
+        generated_text = response.choices[0].message.content.strip()
+        responses.append(generated_text)
+        
+        # Add the model's response and the pushback prompt to the messages for next iteration
+        if i < num_responses - 1:  # No need to add for the last iteration
+            current_messages.append({"role": "assistant", "content": generated_text})
             
-            # Track token usage
-            count_tokens["input"] += response.usage.prompt_tokens
-            count_tokens["output"] += response.usage.completion_tokens
-            
-            # Extract the response content
-            generated_text = response.choices[0].message.content.strip()
-            responses.append(generated_text)
-            
-            # Add the model's response and the pushback prompt to the messages for next iteration
-            if i < num_responses - 1:  # No need to add for the last iteration
-                current_messages.append({"role": "assistant", "content": generated_text})
+            # Use the corresponding pushback prompt if available, otherwise raise an error
+            if question in pushbacks and i < len(pushbacks[question]):
+                pushback = pushbacks[question][i]
+            else:
+                # Raise error instead of using a generic fallback
+                raise ValueError(f"Missing pushback prompt for question: '{question}' at index {i}")
                 
-                # Use the corresponding pushback prompt if available, otherwise raise an error
-                if question in pushbacks and i < len(pushbacks[question]):
-                    pushback = pushbacks[question][i]
-                else:
-                    # Raise error instead of using a generic fallback
-                    raise ValueError(f"Missing pushback prompt for question: '{question}' at index {i}")
-                    
-                current_messages.append({"role": "user", "content": f"{pushback} Limit your response to about 250 words."})
-            
-            # Log response and estimated cost
-            cost = estimate_cost(model_id, count_tokens)
-            logging.debug(f"Response {i+1} generated. Total tokens so far: {count_tokens}")
-            logging.debug(f"Estimated cost so far: ${cost:.4f}")
-            
-            # Small delay to prevent rate limiting
-            time.sleep(1)
-            
-        except Exception as e:
-            logging.error(f"Error generating response {i+1}: {e}")
-            # Add a placeholder for failed responses
-            responses.append(f"ERROR: Failed to generate response: {str(e)}")
-            time.sleep(2)  # Longer delay after an error
-    
-    # Log final cost estimate
-    cost = estimate_cost(model_id, count_tokens)
-    logging.info(f"Total estimated cost for this question: ${cost:.4f}")
+            current_messages.append({"role": "user", "content": f"{pushback} Limit your response to about 250 words."})
+        
+        # Small delay to prevent rate limiting
+        time.sleep(1)
     
     return responses
 
@@ -192,12 +152,12 @@ def save_batch_results(results, output_file, batch_questions):
         batch_df.to_csv(output_file)
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate and save multiple GPT-4o responses")
-    parser.add_argument("--api_key", type=str, help="OpenAI API Key")
-    parser.add_argument("--base_url", type=str, default="https://cmu.litellm.ai", help="Custom base URL for API (e.g., 'https://cmu.litellm.ai')")
-    parser.add_argument("--batch_size", type=int, default=4, help="Number of questions to process in each batch")
+    parser = argparse.ArgumentParser(description="Generate and save multiple GPT-4o responses using Azure OpenAI")
+    parser.add_argument("--api_key", type=str, help="Azure OpenAI API Key")
+    parser.add_argument("--azure_endpoint", type=str, default="https://gpt-35-1106.openai.azure.com/", help="Azure OpenAI Endpoint")
+    parser.add_argument("--batch_size", type=int, default=1, help="Number of questions to process in each batch")
     parser.add_argument("--num_responses", type=int, default=5, help="Number of responses to generate for each question")
-    parser.add_argument("--output_dir", type=str, default="output/gpt-4o-v0.0.2", help="Custom output directory")
+    parser.add_argument("--output_dir", type=str, default="output/gpt-4o", help="Custom output directory")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     args = parser.parse_args()
     
@@ -216,9 +176,15 @@ def main():
     logging.info(f"Arguments: {log_args}")
     
     # Ensure we have an API key
-    api_key = args.api_key or os.environ.get("OPENAI_API_KEY")
+    api_key = args.api_key or os.environ.get("AZURE_OPENAI_API_KEY")
     if api_key is None:
-        logging.error("No API key provided. Please provide via --api_key or set OPENAI_API_KEY environment variable.")
+        logging.error("No API key provided. Please provide via --api_key or set AZURE_OPENAI_API_KEY environment variable.")
+        return
+    
+    # Ensure we have an Azure endpoint
+    azure_endpoint = args.azure_endpoint or os.environ.get("AZURE_OPENAI_ENDPOINT")
+    if azure_endpoint is None:
+        logging.error("No Azure endpoint provided. Please provide via --azure_endpoint or set AZURE_OPENAI_ENDPOINT environment variable.")
         return
     
     batch_size = args.batch_size
@@ -230,15 +196,15 @@ def main():
     
     # Define prompt files with paths
     prompt_files = [
-        # {"name": "prompt1", "type": "individual_thinker", "path": f"{output_dir}/prompt1.csv"},
-        # {"name": "prompt2", "type": "spt", "path": f"{output_dir}/prompt2.csv"},
-        # {"name": "prompt3", "type": "non_sycophantic", "path": f"{output_dir}/prompt3.csv"},
-        # {"name": "prompt4", "type": "spt_non_sycophantic", "path": f"{output_dir}/prompt4.csv"},
-        {"name": "prompt0", "type": "basic_gpt", "path": f"{output_dir}/prompt0.csv"}
+        {"name": "prompt0", "type": "basic_gpt", "path": f"{output_dir}/prompt0.csv"},
+        {"name": "prompt1", "type": "individual_thinker", "path": f"{output_dir}/prompt1.csv"},
+        {"name": "prompt2", "type": "spt", "path": f"{output_dir}/prompt2.csv"},
+        {"name": "prompt3", "type": "non_sycophantic", "path": f"{output_dir}/prompt3.csv"},
+        {"name": "prompt4", "type": "spt_non_sycophantic", "path": f"{output_dir}/prompt4.csv"}
     ]
     
     # Log information about the run
-    logging.info(f"Processing model: openai/gpt-4o")
+    logging.info("Processing model: gpt-4o using Azure OpenAI API")
     logging.info(f"Output directory: {output_dir}")
     logging.info(f"Batch size: {batch_size}")
     logging.info(f"Number of responses per question: {num_responses}")
@@ -264,9 +230,21 @@ def main():
         prompt_type = prompt_info["type"]
         output_file = prompt_info["path"]
         
+        # For prompt2 (spt), start from the nth question
+        start_index = 0
+        if prompt_type == "spt":
+            start_index = 15  # Set this to your desired starting index
+            logging.info(f"For prompt type {prompt_type}, starting from question index {start_index}")
+        
         # Filter out questions that have already been processed for this prompt
         completed = completed_by_prompt[prompt_name]
-        questions_to_process = [q for q in all_questions if q not in completed]
+        
+        # Get questions to process, starting from the right index for prompt2
+        questions_to_process = []
+        if prompt_type == "spt":
+            questions_to_process = [q for i, q in enumerate(all_questions) if i >= start_index and q not in completed]
+        else:
+            questions_to_process = [q for q in all_questions if q not in completed]
         
         if not questions_to_process:
             logging.info(f"All questions already processed for {prompt_name}. Skipping.")
@@ -291,15 +269,13 @@ def main():
                 try:
                     messages = get_chat_messages(question, prompt_type)
                     responses = generate_responses(
-                        messages, api_key, question, pushbacks, 
-                        model_id="openai/gpt-4o", base_url=args.base_url, 
+                        messages, api_key, question, pushbacks,
+                        model_id="gpt-4o",
                         num_responses=num_responses
                     )
                     batch_results[question] = responses
                 except ValueError as e:
-                    logging.error(f"Error: {e}")
-                    logging.error(f"Skipping question: {question}")
-                    continue
+                    raise e
             
             # Save batch results
             if batch_results:
@@ -309,8 +285,8 @@ def main():
                 # Update results dictionary
                 results.update(batch_results)
         
-    logging.info("\nCompleted processing model: openai/gpt-4o")
-    logging.info(f"Final results saved to {output_dir}/prompt1.csv through {output_dir}/prompt0.csv")
+    logging.info("\nCompleted processing model: gpt-4o using Azure OpenAI API")
+    logging.info(f"Final results saved to {output_dir}/prompt0.csv ~ prompt4.csv")
 
 if __name__ == "__main__":
     main()
