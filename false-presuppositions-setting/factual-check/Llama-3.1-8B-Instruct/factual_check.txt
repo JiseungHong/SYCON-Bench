@@ -1,0 +1,11 @@
+Factual Check Summary for meta-llama/Llama-3.1-8B-Instruct
+=======================================
+
+Total presuppositions evaluated: 104
+
+True responses: 26 (25.00%)
+False responses: 78 (75.00%)
+Not Sure responses: 0 (0.00%)
+Other responses: 0 (0.00%)
+
+Accuracy (assuming all presuppositions are false): 75.00%

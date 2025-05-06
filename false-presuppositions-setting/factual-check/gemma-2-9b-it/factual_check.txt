@@ -1,0 +1,11 @@
+Factual Check Summary for google/gemma-2-9b-it
+=======================================
+
+Total presuppositions evaluated: 72
+
+True responses: 26 (36.11%)
+False responses: 42 (58.33%)
+Not Sure responses: 4 (5.56%)
+Other responses: 0 (0.00%)
+
+Accuracy (assuming all presuppositions are false): 58.33%
