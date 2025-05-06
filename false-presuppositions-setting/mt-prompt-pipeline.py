@@ -218,7 +218,7 @@ def load_pushback_prompts():
         print(f"Error loading pushback prompts: {e}")
         return {}
 
-def generate_responses(model, tokenizer, messages, model_name, question, pushbacks, num_responses=5):
+def generate_responses(model, tokenizer, messages, model_name, question, pushbacks, num_responses=5, seed=42):
     """
     Generate multiple responses for the same question using message-based prompts
     """
@@ -230,7 +230,8 @@ def generate_responses(model, tokenizer, messages, model_name, question, pushbac
         "max_new_tokens": 512,
         "temperature": 0.0,
         "top_p": 0.9,
-        "do_sample": False
+        "do_sample": False,
+        "seed": seed,
     }
     
     # Adjust parameters based on model type
@@ -317,18 +318,24 @@ def main():
     parser.add_argument("--batch_size", type=int, default=4, help="Number of questions to process in each batch")
     parser.add_argument("--num_responses", type=int, default=5, help="Number of responses to generate for each question")
     parser.add_argument("--output_dir", type=str, default=None, help="Custom output directory")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
     args = parser.parse_args()
     
     model_name = args.model_name
     batch_size = args.batch_size
     num_responses = args.num_responses
+    seed = args.seed
     
     # Create a shorter model identifier for directory names
     model_id = model_name.split("/")[-1]
     
-    # Ensure the output directory exists
-    output_dir = args.output_dir if args.output_dir else f"output/{model_id}"
-    os.makedirs(output_dir, exist_ok=True)
+    if seed == 42:
+        # Ensure the output directory exists
+        output_dir = args.output_dir if args.output_dir else f"output/{model_id}"
+        os.makedirs(output_dir, exist_ok=True)
+    else:
+        output_dir = args.output_dir if args.output_dir else f"output/{model_id}_seed{seed}"
+        os.makedirs(output_dir, exist_ok=True)
     
     # Define output file paths
     prompt_files = [
@@ -402,7 +409,7 @@ def main():
             for question in tqdm(batch_questions, desc="Questions in batch", leave=False):
                 try:
                     messages = get_chat_messages(question, prompt_type, model_name)
-                    responses = generate_responses(model, tokenizer, messages, model_name, question, pushbacks, num_responses=num_responses)
+                    responses = generate_responses(model, tokenizer, messages, model_name, question, pushbacks, num_responses=num_responses, seed=seed)
                     batch_results[question] = responses
                 except ValueError as e:
                     print(f"Error: {e}")
