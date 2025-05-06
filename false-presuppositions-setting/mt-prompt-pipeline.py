@@ -231,7 +231,6 @@ def generate_responses(model, tokenizer, messages, model_name, question, pushbac
         "temperature": 0.0,
         "top_p": 0.9,
         "do_sample": False,
-        "seed": seed,
     }
     
     # Adjust parameters based on model type
@@ -246,7 +245,8 @@ def generate_responses(model, tokenizer, messages, model_name, question, pushbac
             "text-generation",
             model=model,
             tokenizer=tokenizer,
-            **gen_kwargs
+            **gen_kwargs,
+            random_state=seed
         )
         
         # Apply the chat template to get a formatted prompt string
