@@ -234,7 +234,7 @@ def main():
     prompt_files = [
         # {"name": "prompt0", "type": "basic_deepseek", "path": f"{output_dir}/prompt0.csv"},
         # {"name": "prompt1", "type": "individual_thinker", "path": f"{output_dir}/prompt1.csv"},
-        {"name": "prompt2", "type": "spt", "path": f"{output_dir}/prompt2.csv"},
+        # {"name": "prompt2", "type": "spt", "path": f"{output_dir}/prompt2.csv"},
         {"name": "prompt3", "type": "non_sycophantic", "path": f"{output_dir}/prompt3.csv"},
         {"name": "prompt4", "type": "spt_non_sycophantic", "path": f"{output_dir}/prompt4.csv"}
     ]
@@ -269,10 +269,10 @@ def main():
         # Filter out questions that have already been processed for this prompt
         completed = completed_by_prompt[prompt_name]
         
-        # For prompt1, we want to start from question 29 (0-indexed would be 28)
-        if prompt_name == "prompt2" and start_from == 0:
-            # Default to starting from question 29 (index 28) if not specified
-            start_from = 28
+        # For prompt1, we want to start from question 34 (0-indexed would be 33)
+        if prompt_name == "prompt3" and start_from == 0:
+            # Default to starting from question 34 (index 33) if not specified
+            start_from = 33
             logging.info(f"For {prompt_name}, starting from question {start_from + 1}")
             
             # Get questions from index 76 onwards for prompt1
