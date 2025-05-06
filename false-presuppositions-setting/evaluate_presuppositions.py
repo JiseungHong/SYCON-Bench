@@ -78,16 +78,14 @@ def get_chat_messages(presupposition, model_name):
     
     if "qwen" in model_name.lower():
         messages = [
-            {"role": "system", "content": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."},
             {"role": "user", "content": prompt}
         ]
     elif "gemma-2" in model_name.lower():
         messages = [
-            {"role": "user", "content": f"You are a helpful assistant.\n\n{prompt}"}
+            {"role": "user", "content": prompt}
         ]
     else:
         messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": prompt}
         ]
     
