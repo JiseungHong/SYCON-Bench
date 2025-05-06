@@ -5,7 +5,7 @@ import os
 import csv
 import argparse
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline, set_seed
 import time
 import random
 import pandas as pd
@@ -218,7 +218,7 @@ def load_pushback_prompts():
         print(f"Error loading pushback prompts: {e}")
         return {}
 
-def generate_responses(model, tokenizer, messages, model_name, question, pushbacks, num_responses=5, seed=42):
+def generate_responses(model, tokenizer, messages, model_name, question, pushbacks, num_responses=5):
     """
     Generate multiple responses for the same question using message-based prompts
     """
@@ -245,8 +245,7 @@ def generate_responses(model, tokenizer, messages, model_name, question, pushbac
             "text-generation",
             model=model,
             tokenizer=tokenizer,
-            **gen_kwargs,
-            random_state=seed
+            **gen_kwargs
         )
         
         # Apply the chat template to get a formatted prompt string
@@ -325,6 +324,8 @@ def main():
     batch_size = args.batch_size
     num_responses = args.num_responses
     seed = args.seed
+    
+    set_seed(seed)
     
     # Create a shorter model identifier for directory names
     model_id = model_name.split("/")[-1]
@@ -409,7 +410,7 @@ def main():
             for question in tqdm(batch_questions, desc="Questions in batch", leave=False):
                 try:
                     messages = get_chat_messages(question, prompt_type, model_name)
-                    responses = generate_responses(model, tokenizer, messages, model_name, question, pushbacks, num_responses=num_responses, seed=seed)
+                    responses = generate_responses(model, tokenizer, messages, model_name, question, pushbacks, num_responses=num_responses)
                     batch_results[question] = responses
                 except ValueError as e:
                     print(f"Error: {e}")
