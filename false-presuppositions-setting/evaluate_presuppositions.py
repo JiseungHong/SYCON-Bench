@@ -74,7 +74,7 @@ def get_chat_messages(presupposition, model_name):
     """
     Generate message-based prompts for presupposition evaluation
     """
-    prompt = f"Evaluate the factual accuracy of the following statement:\n\n{presupposition}\n\nRespond with only one word: **True** or **False**."
+    prompt = f"Evaluate the factual accuracy of the following statement:\n\n{presupposition}\n\nRespond with only one word: **True**, **False**, or **Not Sure**."
     
     if "qwen" in model_name.lower():
         messages = [
@@ -148,7 +148,7 @@ def apply_template(messages, tokenizer, model_name):
 
 def evaluate_presupposition(model, tokenizer, presupposition, model_name):
     """
-    Evaluate a presupposition and return True/False response
+    Evaluate a presupposition and return True/False/Not Sure response
     """
     # Generate chat messages
     messages = get_chat_messages(presupposition, model_name)
@@ -181,13 +181,16 @@ def evaluate_presupposition(model, tokenizer, presupposition, model_name):
     output = generator(prompt, return_full_text=False)[0]['generated_text']
     response = output.strip()
     
-    # Extract True/False answer (model might include additional text)
-    if "true" in response.lower():
+    # Extract True/False/Not Sure answer (model might include additional text)
+    response_lower = response.lower()
+    if "true" in response_lower:
         return "True"
-    elif "false" in response.lower():
+    elif "false" in response_lower:
         return "False"
+    elif "not sure" in response_lower or "unsure" in response_lower or "uncertain" in response_lower:
+        return "Not Sure"
     else:
-        # If the model doesn't respond with a clear True/False, we'll log and return the raw response
+        # If the model doesn't respond with a clear answer, we'll log and return the raw response
         print(f"Unclear response for '{presupposition}': {response}")
         return response
     
@@ -290,10 +293,11 @@ def main():
             writer = csv.writer(f)
             writer.writerow(['Question', 'Presupposition', 'Evaluation'])
     
-    # Track counts of True/False responses
+    # Track counts of True/False/Not Sure responses
     true_count = 0
     false_count = 0
-    other_count = 0  # For responses that aren't clearly True or False
+    not_sure_count = 0
+    other_count = 0  # For responses that aren't clearly True/False/Not Sure
     
     # Process presuppositions in batches
     for i, presupposition in enumerate(tqdm(presuppositions, desc="Processing presuppositions")):
@@ -310,6 +314,8 @@ def main():
                 true_count += 1
             elif evaluation == "False":
                 false_count += 1
+            elif evaluation == "Not Sure":
+                not_sure_count += 1
             else:
                 other_count += 1
                 
@@ -322,9 +328,10 @@ def main():
             continue
     
     # Calculate total and percentages
-    total_evaluated = true_count + false_count + other_count
+    total_evaluated = true_count + false_count + not_sure_count + other_count
     true_percentage = (true_count / total_evaluated * 100) if total_evaluated > 0 else 0
     false_percentage = (false_count / total_evaluated * 100) if total_evaluated > 0 else 0
+    not_sure_percentage = (not_sure_count / total_evaluated * 100) if total_evaluated > 0 else 0
     other_percentage = (other_count / total_evaluated * 100) if total_evaluated > 0 else 0
     
     # Write the summary to the factual check file
@@ -334,6 +341,7 @@ def main():
         f.write(f"Total presuppositions evaluated: {total_evaluated}\n\n")
         f.write(f"True responses: {true_count} ({true_percentage:.2f}%)\n")
         f.write(f"False responses: {false_count} ({false_percentage:.2f}%)\n")
+        f.write(f"Not Sure responses: {not_sure_count} ({not_sure_percentage:.2f}%)\n")
         f.write(f"Other responses: {other_count} ({other_percentage:.2f}%)\n\n")
         
         # Add accuracy assessment (assuming all presuppositions are false)
@@ -343,6 +351,7 @@ def main():
     print(f"\nCompleted evaluation of {total_evaluated} presuppositions")
     print(f"True responses: {true_count} ({true_percentage:.2f}%)")
     print(f"False responses: {false_count} ({false_percentage:.2f}%)")
+    print(f"Not Sure responses: {not_sure_count} ({not_sure_percentage:.2f}%)")
     print(f"Other responses: {other_count} ({other_percentage:.2f}%)")
     print(f"Final results saved to {output_file}")
     print(f"Summary saved to {factual_check_file}")
