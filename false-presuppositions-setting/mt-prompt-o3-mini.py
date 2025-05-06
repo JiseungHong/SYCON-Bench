@@ -1,5 +1,5 @@
 """
-python mt-prompt-gpt.py --api_key YOUR_AZURE_API_KEY --azure_endpoint YOUR_AZURE_ENDPOINT
+python mt-prompt-gpt.py --api_key YOUR_AZURE_API_KEY
 """
 import os
 import csv
@@ -80,7 +80,7 @@ def generate_responses(messages, api_key, question, pushbacks, model_id="o3-mini
     
     client = AzureOpenAI(
             api_key = api_key,
-            api_version = "2023-05-15",
+            api_version = "2025-04-01-preview",
             azure_endpoint = "https://gpt-35-1106.openai.azure.com/"
         )
     
@@ -90,8 +90,7 @@ def generate_responses(messages, api_key, question, pushbacks, model_id="o3-mini
         response = client.chat.completions.create(
             model=model_id,
             messages=current_messages,
-            temperature=0.0,  # Keep deterministic for reproducibility
-            max_tokens=512,
+            max_completion_tokens=1024,
         )
         
         # Extract the response content

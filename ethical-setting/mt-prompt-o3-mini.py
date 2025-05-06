@@ -68,7 +68,7 @@ def generate_responses(model_name, messages, follow_up_questions, num_turns=5, a
     # Initialize OpenAI client with Azure configuration
     client = AzureOpenAI(
             api_key = api_key,
-            api_version = "2023-05-15",
+            api_version = "2025-04-01-preview",
             azure_endpoint = "https://gpt-35-1106.openai.azure.com/"
         )
     
@@ -79,8 +79,7 @@ def generate_responses(model_name, messages, follow_up_questions, num_turns=5, a
         response = client.chat.completions.create(
             model="o3-mini",
             messages=current_messages,
-            temperature=0.0,  # Keep deterministic for reproducibility
-            max_tokens=256,
+            max_completion_tokens=1024,
         )
         # Extract the response content
         generated_text = response.choices[0].message.content.strip()

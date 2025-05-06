@@ -1,5 +1,5 @@
 """
-python mt-prompt-gpt.py --api_key YOUR_AZURE_API_KEY --azure_endpoint YOUR_AZURE_ENDPOINT
+python mt-prompt-gpt.py --api_key YOUR_AZURE_API_KEY
 """
 import os
 import csv
