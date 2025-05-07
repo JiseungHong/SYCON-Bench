@@ -210,6 +210,10 @@ def process_prompt_file(csv_file: str, api_key: str, output_file: str, all_resul
         logging.error(f"Error loading stereoset data file: {e}")
         return []
     
+    # Create a dictionary mapping questions to stereotypes for quick lookup
+    question_to_stereotype = {row.get("question", "").strip(): row.get("stereotype", "").strip() 
+                             for row in stereoset_data if row.get("question", "").strip()}
+    
     # Check if we have existing results to resume from
     existing_evaluations, last_completed_row = load_existing_results(all_results_file)
     
@@ -255,17 +259,27 @@ def process_prompt_file(csv_file: str, api_key: str, output_file: str, all_resul
         # Get the question from the questions list
         question = questions[actual_i]
         
-        print(question, stereoset_data[i].get("question", ""))
-        assert question == stereoset_data[i].get("question", ""), f"Question mismatch at row {actual_i+1}"
-        
-        stereotype = stereoset_data[i].get("stereotype", "").strip()
-        if stereotype == "":
-            raise ValueError(f"Row {actual_i+1}: No stereotype found for question: {question}")
+        # Get the stereotype by question matching
+        stereotype = question_to_stereotype.get(question, "")
         
         if not stereotype:
-            logging.warning(f"Row {actual_i+1}: No stereotype found for question: {question}")
-        else:
-            logging.debug(f"Row {actual_i+1}: Found stereotype: {stereotype}")
+            # Try to find closest match (in case of minor differences)
+            closest_match = None
+            highest_similarity = 0
+            for q in question_to_stereotype.keys():
+                # Simple similarity check (can be improved)
+                similarity = sum(a == b for a, b in zip(question.lower(), q.lower())) / max(len(question), len(q))
+                if similarity > highest_similarity and similarity > 0.9:  # 90% similarity threshold
+                    highest_similarity = similarity
+                    closest_match = q
+            
+            if closest_match:
+                stereotype = question_to_stereotype[closest_match]
+                logging.info(f"Row {actual_i+1}: Found similar question match. Using stereotype: {stereotype}")
+            else:
+                error_msg = f"No matching stereotype found for question: {question}"
+                logging.error(f"Row {actual_i+1}: {error_msg}")
+                raise ValueError(error_msg)
         
         if actual_i < 5:
             logging.info(f"Row {actual_i+1}: Question: {question}, Stereotype: {stereotype}")
@@ -378,27 +392,27 @@ def main(args):
             "file": os.path.join(input_dir, "prompt0.csv"), 
             "output": os.path.join(output_dir, "prompt0_results.txt"),
             "all_results": os.path.join(output_dir, "prompt0_result_all.csv")
+        },
+        {
+            "file": os.path.join(input_dir, "prompt1.csv"), 
+            "output": os.path.join(output_dir, "prompt1_results.txt"),
+            "all_results": os.path.join(output_dir, "prompt1_result_all.csv")
+        },
+        {
+            "file": os.path.join(input_dir, "prompt2.csv"), 
+            "output": os.path.join(output_dir, "prompt2_results.txt"),
+            "all_results": os.path.join(output_dir, "prompt2_result_all.csv")
+        },
+        {
+            "file": os.path.join(input_dir, "prompt3.csv"), 
+            "output": os.path.join(output_dir, "prompt3_results.txt"),
+            "all_results": os.path.join(output_dir, "prompt3_result_all.csv")
+        },
+        {
+            "file": os.path.join(input_dir, "prompt4.csv"), 
+            "output": os.path.join(output_dir, "prompt4_results.txt"),
+            "all_results": os.path.join(output_dir, "prompt4_result_all.csv")
         }
-        # {
-        #     "file": os.path.join(input_dir, "prompt1.csv"), 
-        #     "output": os.path.join(output_dir, "prompt1_results.txt"),
-        #     "all_results": os.path.join(output_dir, "prompt1_result_all.csv")
-        # },
-        # {
-        #     "file": os.path.join(input_dir, "prompt2.csv"), 
-        #     "output": os.path.join(output_dir, "prompt2_results.txt"),
-        #     "all_results": os.path.join(output_dir, "prompt2_result_all.csv")
-        # },
-        # {
-        #     "file": os.path.join(input_dir, "prompt3.csv"), 
-        #     "output": os.path.join(output_dir, "prompt3_results.txt"),
-        #     "all_results": os.path.join(output_dir, "prompt3_result_all.csv")
-        # },
-        # {
-        #     "file": os.path.join(input_dir, "prompt4.csv"), 
-        #     "output": os.path.join(output_dir, "prompt4_results.txt"),
-        #     "all_results": os.path.join(output_dir, "prompt4_result_all.csv")
-        # }
     ]
     
     all_results = {}
