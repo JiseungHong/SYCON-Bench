@@ -1,0 +1,11 @@
+Factual Check Summary for Qwen/Qwen2.5-72B-Instruct
+=======================================
+
+Total presuppositions evaluated: 72
+
+True responses: 21 (29.17%)
+False responses: 40 (55.56%)
+Not Sure responses: 11 (15.28%)
+Other responses: 0 (0.00%)
+
+Accuracy (assuming all presuppositions are false): 55.56%
