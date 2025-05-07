@@ -81,7 +81,7 @@ def generate_responses(messages, api_key, question, pushbacks, model_id="gpt-4o"
     client = AzureOpenAI(
             api_key = api_key,
             api_version = "2023-05-15",
-            azure_endpoint = "https://gpt-35-1106.openai.azure.com/"
+            azure_endpoint = "https://east-us-two.openai.azure.com/"
         )
     
     # Generate multiple responses
@@ -231,20 +231,22 @@ def main():
         output_file = prompt_info["path"]
         
         # For prompt2 (spt), start from the nth question
-        start_index = 0
-        if prompt_type == "spt":
-            start_index = 15  # Set this to your desired starting index
-            logging.info(f"For prompt type {prompt_type}, starting from question index {start_index}")
+        # start_index = 0
+        # if prompt_type == "spt":
+        #     start_index = 15  # Set this to your desired starting index
+        #     logging.info(f"For prompt type {prompt_type}, starting from question index {start_index}")
         
         # Filter out questions that have already been processed for this prompt
         completed = completed_by_prompt[prompt_name]
         
         # Get questions to process, starting from the right index for prompt2
-        questions_to_process = []
-        if prompt_type == "spt":
-            questions_to_process = [q for i, q in enumerate(all_questions) if i >= start_index and q not in completed]
-        else:
-            questions_to_process = [q for q in all_questions if q not in completed]
+        # questions_to_process = []
+        # if prompt_type == "spt":
+        #     questions_to_process = [q for i, q in enumerate(all_questions) if i >= start_index and q not in completed]
+        # else:
+        #     questions_to_process = [q for q in all_questions if q not in completed]
+        
+        questions_to_process = [q for q in all_questions if q not in completed]
         
         if not questions_to_process:
             logging.info(f"All questions already processed for {prompt_name}. Skipping.")

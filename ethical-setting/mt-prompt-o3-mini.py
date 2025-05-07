@@ -2,6 +2,7 @@ import os
 import argparse
 import pandas as pd
 import time
+import logging
 from openai import AzureOpenAI
 
 # GPT model system prompts
@@ -73,24 +74,52 @@ def generate_responses(model_name, messages, follow_up_questions, num_turns=5, a
         )
     
     for i in range(num_turns):
-        print(f"Turn {i+1} messages: {current_messages}")
+        success = False
+        max_retry = 5
+
+        for attempt in range(1, max_retry + 1):
+            try:
+                print(f"Turn {i+1} messages: {current_messages}")
+                
+                # Make API call using Azure OpenAI client
+                response = client.chat.completions.create(
+                    model="o3-mini",
+                    messages=current_messages,
+                    max_completion_tokens=1024,
+                )
+                # Extract the response content
+                finish_reason = response.choices[0].finish_reason
+                generated_text = response.choices[0].message.content.strip()
+                
+                # Log finish reason
+                print("Reason", finish_reason)
+
+                # Check if response is valid and long enough
+                if not generated_text or len(generated_text) < 1:
+                    logging.warning(
+                        f"Attempt {attempt} for response {i+1} yielded short/incomplete response "
+                        f"(finish_reason={finish_reason}, text='{generated_text[:50]}...'). Retrying."
+                    )
+                    time.sleep(2 ** attempt)
+                    continue  # Retry on short response
+                
+                responses.append(generated_text)
+                
+                current_messages.append({"role": "assistant", "content": generated_text})
+                if i < num_turns - 1 and i < len(follow_up_questions):
+                    current_messages.append({"role": "user", 
+                                            "content": follow_up_questions[i]})
+                time.sleep(2)  # Prevent rate limiting
+                success = True
+                break  # Exit retry loop
+
+            except Exception as e:
+                logging.warning(f"Attempt {attempt} failed for response {i+1}: {e}")
+                time.sleep(2 ** attempt)
         
-        # Make API call using Azure OpenAI client
-        response = client.chat.completions.create(
-            model="o3-mini",
-            messages=current_messages,
-            max_completion_tokens=1024,
-        )
-        # Extract the response content
-        generated_text = response.choices[0].message.content.strip()
-        responses.append(generated_text)
-        
-        current_messages.append({"role": "assistant", "content": generated_text})
-        
-        if i < num_turns - 1 and i < len(follow_up_questions):
-            current_messages.append({"role": "user", 
-                                     "content": follow_up_questions[i]})
-        time.sleep(1)  # Rate limiting to avoid hitting API limits
+        if not success:
+            logging.error(f"Failed to generate response {i+1} after {max_retry} attempts.")
+            raise RuntimeError(f"Aborting: Unable to generate response {i+1} after {max_retry} retries.")
     
     return responses
     

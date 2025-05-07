@@ -2,20 +2,20 @@ import os
 import argparse
 import pandas as pd
 import time
-import anthropic  # Import Anthropic client
+import anthropic
 import random
 
-# Claude model system prompts
+# Claude model system prompts - unchanged from original
 CLAUDE_SYSTEM_PROMPTS = {
     "claude-3-7-sonnet-20250219": "You are a helpful, honest, and intelligent assistant."
 }
 
-# Claude model mappings (for API endpoints)
+# Claude model mappings - unchanged from original
 CLAUDE_MODEL_MAPPING = {
     "claude-3-7-sonnet-20250219": "claude-3-7-sonnet-20250219"
 }
 
-# Configuration for Claude-3.7-Sonnet pricing (as of April 2025)
+# Configuration for pricing - unchanged from original
 PRICE = {
     "claude-3-7-sonnet-20250219": {
         "input": 15 / 1e6,  # $15 per million input tokens
@@ -26,6 +26,7 @@ PRICE = {
 def get_chat_messages(questions, prompt_type, model_name=None):
     """
     Generate message-based prompts for multi-turn conversation
+    This function is unchanged from the original
     """
     if prompt_type == "prompt0":
         # Basic Claude prompt for prompt0
@@ -69,6 +70,7 @@ def get_chat_messages(questions, prompt_type, model_name=None):
 def generate_responses(model_name, messages, follow_up_questions, num_turns=5, api_key=None, system=None):
     """
     Generate responses using the Anthropic API for Claude models
+    This function is unchanged from the original
     """
     responses = []
     current_messages = messages.copy()
@@ -141,46 +143,108 @@ def generate_responses(model_name, messages, follow_up_questions, num_turns=5, a
     print(f"Estimated cost - Input: ${input_cost:.4f}, Output: ${output_cost:.4f}, Total: ${total_cost:.4f}")
     
     return responses
+
+def save_batch_results(results, output_file, batch_rows, original_df=None):
+    """
+    Save batch results to CSV, inserting them at the correct position based on original indices
+    rather than appending at the end
+    """
+    # Create DataFrame for current batch
+    batch_data = {}
+    original_indices = {}
     
-def save_batch_results(results, output_file, batch_rows):
-    """
-    Save batch results to CSV
-    """
-    # If file exists, read it to append new data
+    for row in batch_rows:
+        question = row["question"]
+        if question in results and results[question]:  # Check if we have responses
+            batch_data[question] = results[question]
+            # Store the original index of each question
+            original_indices[question] = row.name if hasattr(row, 'name') else -1
+    
+    if not batch_data:
+        print(f"No data to add to {output_file}")
+        return
+        
+    # Create DataFrame for the batch
+    batch_df = pd.DataFrame(batch_data).transpose()
+    batch_df.columns = [f"Response_{i+1}" for i in range(len(next(iter(batch_data.values()))))]
+    batch_df.index.name = "Question"
+    
+    # Add original index as a column for sorting
+    batch_df['original_index'] = pd.Series(original_indices)
+    
     if os.path.exists(output_file):
+        # Read existing data
         existing_df = pd.read_csv(output_file, index_col="Question")
-        # Create DataFrame for current batch
-        batch_df = pd.DataFrame({row["question"]: results[row["question"]] for row in batch_rows}).transpose()
-        batch_df.columns = [f"Response_{i+1}" for i in range(len(results[batch_rows[0]["question"]]))]
-        batch_df.index.name = "Question"
-        # Combine existing and new data
+        
+        # If original_df is provided, use it to get indices for the existing questions
+        if original_df is not None:
+            # Create a mapping from question to original index
+            question_to_index = {}
+            for _, row in original_df.iterrows():
+                question_to_index[row['question']] = row.name
+            
+            # Add original_index column to existing data
+            existing_df['original_index'] = pd.Series({q: question_to_index.get(q, 999999) 
+                                                      for q in existing_df.index})
+        else:
+            # If no original_df, assume existing questions come before new ones
+            existing_df['original_index'] = -1
+        
+        # Combine data
         combined_df = pd.concat([existing_df, batch_df])
+        
+        # Sort by the original index
+        combined_df = combined_df.sort_values('original_index')
+        
+        # Remove the temporary column before saving
+        combined_df = combined_df.drop('original_index', axis=1)
+        
+        # Save the combined and sorted data
         combined_df.to_csv(output_file)
+        print(f"Updated existing file: {output_file} with {len(batch_data)} questions in correct order")
     else:
-        # Create new DataFrame if file doesn't exist
-        batch_df = pd.DataFrame({row["question"]: results[row["question"]] for row in batch_rows}).transpose()
-        batch_df.columns = [f"Response_{i+1}" for i in range(len(results[batch_rows[0]["question"]]))]
-        batch_df.index.name = "Question"
+        # For new files, just remove the sorting column and save
+        batch_df = batch_df.drop('original_index', axis=1)
         batch_df.to_csv(output_file)
+        print(f"Created new file: {output_file} with {len(batch_data)} questions")
+
+def find_missing_questions(file1_path, file2_path):
+    """
+    Find questions that are in file1 but not in file2
+    """
+    # Read the CSV files
+    df1 = pd.read_csv(file1_path)
+    df2 = pd.read_csv(file2_path, index_col="Question")
+    
+    # Convert to sets
+    questions_file2 = set(df2.index.tolist())
+    
+    # Find missing questions
+    missing_mask = ~df1['question'].isin(questions_file2)
+    missing_rows = df1[missing_mask].copy()
+    
+    print(f"Total questions in '{file1_path}': {len(df1)}")
+    print(f"Total questions in '{file2_path}': {len(df2)}")
+    print(f"Number of missing questions: {len(missing_rows)}")
+    
+    return missing_rows
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate and save multiple Claude model responses")
+    parser = argparse.ArgumentParser(description="Process only the missing questions from the dataset")
     parser.add_argument("--model_name", type=str, default="claude-3-7-sonnet-20250219", 
-                       help="Claude model type (default: claude-3-7-sonnet-20250219)")
-    parser.add_argument("--batch_size", type=int, default=1, 
-                       help="Number of questions to process in each batch")
+                        help="Claude model type (default: claude-3-7-sonnet-20250219)")
+    parser.add_argument("--batch_size", type=int, default=2, 
+                        help="Number of questions to process in each batch")
     parser.add_argument("--output_dir", type=str, default=None, 
-                       help="Custom output directory")
+                        help="Custom output directory")
     parser.add_argument("--api_key", type=str, default=None, 
-                       help="API key for Anthropic API")
-    # Add new parameter for starting index
-    parser.add_argument("--start_index", type=int, default=0, 
-                       help="Index of the first question to process (0-based)")
+                        help="API key for Anthropic API")
+    parser.add_argument("--specific_indices", action="store_true",
+                        help="Use indices 20-31 as specified, regardless of missing status")
     args = parser.parse_args()
     
     model_name = args.model_name
     batch_size = args.batch_size
-    start_index = args.start_index  # Get the starting index
     
     # Verify model name is one of the supported models
     if model_name not in CLAUDE_MODEL_MAPPING:
@@ -197,33 +261,43 @@ def main():
     print(f"Processing model: {model_name}")
     print(f"Output directory: {output_dir}")
     print(f"Batch size: {batch_size}")
-    print(f"Starting from question index: {start_index}")
     
     # Read the questions from CSV
     data_df = pd.read_csv("data/stereoset_intra_user_queries_api_over45.csv")
     
-    # Skip questions before the starting index
-    if start_index > 0:
-        data_df = data_df.iloc[start_index:]
-        print(f"Skipped first {start_index} questions. Processing {len(data_df)} remaining questions.")
+    if args.specific_indices:
+        # Extract only rows with indices 20-31
+        missing_df = data_df.iloc[20:32].copy()
+        print(f"Processing specifically requested indices 20-31 ({len(missing_df)} questions)")
+    else:
+        # Find missing questions by comparing with existing output
+        prompt0_file = f"{output_dir}/prompt0.csv"
+        if os.path.exists(prompt0_file):
+            missing_df = find_missing_questions("data/stereoset_intra_user_queries_api_over45.csv", prompt0_file)
+            print(f"Processing {len(missing_df)} missing questions found by comparison")
+        else:
+            print(f"Output file {prompt0_file} not found. Processing indices 20-31 by default.")
+            missing_df = data_df.iloc[20:32].copy()
     
-    # Initialize result dictionaries for each prompt type
-    prompt0_results = {row["question"]: [] for _, row in data_df.iterrows()}   
-    prompt1_results = {row["question"]: [] for _, row in data_df.iterrows()}
-    prompt2_results = {row["question"]: [] for _, row in data_df.iterrows()}
-    prompt3_results = {row["question"]: [] for _, row in data_df.iterrows()}
-    prompt4_results = {row["question"]: [] for _, row in data_df.iterrows()}
+    # Display the questions we'll be processing
+    print("\nQuestions to process:")
+    for i, (_, row) in enumerate(missing_df.iterrows()):
+        print(f"{i+1}. Index {row.name}: {row['question']}")
+    
+    # Initialize result dictionaries for each prompt type with only the missing questions
+    prompt0_results = {row["question"]: [] for _, row in missing_df.iterrows()}
+    prompt1_results = {row["question"]: [] for _, row in missing_df.iterrows()}
+    prompt2_results = {row["question"]: [] for _, row in missing_df.iterrows()}
+    prompt3_results = {row["question"]: [] for _, row in missing_df.iterrows()}
+    prompt4_results = {row["question"]: [] for _, row in missing_df.iterrows()}
     
     # Process questions in batches
-    for batch_start in range(0, len(data_df), batch_size):
-        batch_end = min(batch_start + batch_size, len(data_df))
-        batch_rows = data_df.iloc[batch_start:batch_end].to_dict('records')
+    for batch_start in range(0, len(missing_df), batch_size):
+        batch_end = min(batch_start + batch_size, len(missing_df))
+        batch_rows = missing_df.iloc[batch_start:batch_end].to_dict('records')
         
-        # Calculate the actual question number in the original dataset
-        actual_start = batch_start + start_index + 1  # +1 for 1-based indexing
-        actual_end = batch_end + start_index
-        print(f"\nProcessing questions {actual_start}-{actual_end} out of {len(data_df) + start_index}")
-
+        print(f"\nProcessing batch {batch_start//batch_size + 1} of {(len(missing_df)-1)//batch_size + 1}")
+        
         # Process each row in the batch
         for row in batch_rows:
             # Extract all questions for multi-turn conversation
@@ -234,7 +308,7 @@ def main():
                     follow_up_questions.append(row[col])
             
             all_questions = [row["question"]] + follow_up_questions
-
+            
             # Process prompt0: Basic Claude prompt (system prompt + question)
             print(f"Processing prompt0 (basic Claude) for question: {row['question']}")
             messages, system = get_chat_messages([row["question"]], "prompt0", model_name)
@@ -265,19 +339,17 @@ def main():
             responses = generate_responses(model_name, messages, follow_up_questions, api_key=args.api_key, system=system)
             prompt4_results[row["question"]] = responses
         
-        # Save all results after each batch
-        save_batch_results(prompt0_results, f"{output_dir}/prompt0.csv", batch_rows)
-        save_batch_results(prompt1_results, f"{output_dir}/prompt1.csv", batch_rows)
-        save_batch_results(prompt2_results, f"{output_dir}/prompt2.csv", batch_rows)
-        save_batch_results(prompt3_results, f"{output_dir}/prompt3.csv", batch_rows)
-        save_batch_results(prompt4_results, f"{output_dir}/prompt4.csv", batch_rows)
+        # Save batch results, passing original data_df to maintain proper order
+        save_batch_results(prompt0_results, f"{output_dir}/prompt0.csv", batch_rows, original_df=data_df)
+        save_batch_results(prompt1_results, f"{output_dir}/prompt1.csv", batch_rows, original_df=data_df)
+        save_batch_results(prompt2_results, f"{output_dir}/prompt2.csv", batch_rows, original_df=data_df)
+        save_batch_results(prompt3_results, f"{output_dir}/prompt3.csv", batch_rows, original_df=data_df)
+        save_batch_results(prompt4_results, f"{output_dir}/prompt4.csv", batch_rows, original_df=data_df)
         
-        total_batches = (len(data_df) - 1) // batch_size + 1
-        current_batch = batch_start // batch_size + 1
-        print(f"Completed batch {current_batch} of {total_batches}")
+        print(f"Saved results for batch {batch_start//batch_size + 1}")
     
-    print(f"\nCompleted processing model: {model_name}")
-    print(f"Final results saved to {output_dir}/")
+    print(f"\nCompleted processing missing questions for model: {model_name}")
+    print(f"Results saved to {output_dir}/")
 
 if __name__ == "__main__":
     main()

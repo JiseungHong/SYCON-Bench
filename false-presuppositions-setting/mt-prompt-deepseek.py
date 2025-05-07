@@ -14,33 +14,6 @@ from tqdm import tqdm
 # Import OpenAI compatibility wrapper
 from openai import OpenAI
 
-# Configuration for Deepseek pricing (adjust if you have the actual pricing)
-PRICE = {
-    "deepseek-chat": {
-        "input": 2 / 1e6,  # Placeholder pricing
-        "output": 6 / 1e6,  # Placeholder pricing
-    },
-    "deepseek-reasoner": {
-        "input": 0.55 / 1e6,  # $0.55 per million input tokens (cache miss)
-        "output": 2.19 / 1e6,  # $2.19 per million output tokens
-    }
-}
-
-def estimate_cost(model_id: str, count: dict) -> float:
-    """
-    Show estimated cost to avoid any unexpected usage
-    Note: you should check the usage dashboard in the website for the correct amount
-    """
-    if model_id in PRICE:
-        cost = (
-            PRICE[model_id]["input"] * count["input"]
-            + PRICE[model_id]["output"] * count["output"]
-        )
-    else:
-        logging.warning(f"Undefined {model_id=}")
-        cost = 0
-    return cost
-
 def get_chat_messages(question, prompt_type):
     """
     Generate message-based prompts for questions that might contain false suppositions
@@ -100,10 +73,9 @@ def load_pushback_prompts():
 
 def generate_responses(messages, api_key, question, pushbacks, model_id="deepseek-reasoner", num_responses=5):
     """
-    Generate multiple responses using custom pushback prompts with Deepseek-v3
+    Generate multiple responses using custom pushback prompts with deepseek-r1
     """
     responses = []
-    count_tokens = defaultdict(int)
     current_messages = messages.copy()  # Start with the initial messages
     
     # Initialize OpenAI client with Deepseek base URL
@@ -123,10 +95,6 @@ def generate_responses(messages, api_key, question, pushbacks, model_id="deepsee
                 max_tokens=512,
             )
             
-            # Track token usage
-            count_tokens["input"] += response.usage.prompt_tokens
-            count_tokens["output"] += response.usage.completion_tokens
-            
             # Extract the response content
             generated_text = response.choices[0].message.content.strip()
             responses.append(generated_text)
@@ -144,11 +112,6 @@ def generate_responses(messages, api_key, question, pushbacks, model_id="deepsee
                     
                 current_messages.append({"role": "user", "content": f"{pushback} Limit your response to about 250 words."})
             
-            # Log response and estimated cost
-            cost = estimate_cost(model_id, count_tokens)
-            logging.debug(f"Response {i+1} generated. Total tokens so far: {count_tokens}")
-            logging.debug(f"Estimated cost so far: ${cost:.4f}")
-            
             # Small delay to prevent rate limiting
             time.sleep(1)
             
@@ -157,10 +120,6 @@ def generate_responses(messages, api_key, question, pushbacks, model_id="deepsee
             # Add a placeholder for failed responses
             responses.append(f"ERROR: Failed to generate response: {str(e)}")
             time.sleep(2)  # Longer delay after an error
-    
-    # Log final cost estimate
-    cost = estimate_cost(model_id, count_tokens)
-    logging.info(f"Total estimated cost for this question: ${cost:.4f}")
     
     return responses
 
@@ -200,11 +159,11 @@ def save_batch_results(results, output_file, batch_questions):
         batch_df.to_csv(output_file)
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate and save multiple Deepseek-v3 responses")
+    parser = argparse.ArgumentParser(description="Generate and save multiple deepseek-r1 responses")
     parser.add_argument("--api_key", type=str, help="Deepseek API Key")
-    parser.add_argument("--batch_size", type=int, default=4, help="Number of questions to process in each batch")
+    parser.add_argument("--batch_size", type=int, default=2, help="Number of questions to process in each batch")
     parser.add_argument("--num_responses", type=int, default=5, help="Number of responses to generate for each question")
-    parser.add_argument("--output_dir", type=str, default="output/deepseek-v3", help="Custom output directory")
+    parser.add_argument("--output_dir", type=str, default="output/deepseek-r1", help="Custom output directory")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     args = parser.parse_args()
     
@@ -237,7 +196,7 @@ def main():
     
     # Define prompt files with paths
     prompt_files = [
-        # {"name": "prompt0", "type": "basic_deepseek", "path": f"{output_dir}/prompt0.csv"},
+        {"name": "prompt0", "type": "basic_deepseek", "path": f"{output_dir}/prompt0.csv"},
         {"name": "prompt1", "type": "individual_thinker", "path": f"{output_dir}/prompt1.csv"},
         {"name": "prompt2", "type": "spt", "path": f"{output_dir}/prompt2.csv"},
         {"name": "prompt3", "type": "non_sycophantic", "path": f"{output_dir}/prompt3.csv"},
