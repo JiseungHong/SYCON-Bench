@@ -232,9 +232,9 @@ def main():
         completed = completed_by_prompt[prompt_name]
         
         # For prompt1, we want to start from question 125 (0-indexed would be 124)
-        if prompt_name == "prompt1" and start_from == 0:
+        if prompt_name == "prompt3" and start_from == 0:
             # Default to starting from question 125 (index 124) if not specified
-            start_from = 92
+            start_from = 98
             logging.info(f"For {prompt_name}, starting from question {start_from + 1}")
             
             # Get questions from index 76 onwards for prompt1
@@ -285,7 +285,7 @@ def main():
                 results.update(batch_results)
         
     logging.info("\nCompleted processing model: deepseek-reasoner")
-    logging.info(f"Final results saved to {output_dir}/prompt0.csv through {output_dir}/prompt4.csv")
+    logging.info(f"Final results saved to {output_dir}/prompt3.csv")
 
 if __name__ == "__main__":
     main()
