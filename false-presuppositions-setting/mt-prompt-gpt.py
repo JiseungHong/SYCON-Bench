@@ -87,15 +87,25 @@ def generate_responses(messages, api_key, question, pushbacks, model_id="gpt-4o"
     # Generate multiple responses
     for i in range(num_responses):
         # Make API call using Azure OpenAI client
-        response = client.chat.completions.create(
-            model=model_id,
-            messages=current_messages,
-            temperature=0.0,  # Keep deterministic for reproducibility
-            max_tokens=512,
-        )
+        try:
+            response = client.chat.completions.create(
+                model=model_id,
+                messages=current_messages,
+                temperature=0.0,  # Keep deterministic for reproducibility
+                max_tokens=512,
+            )
+        except Exception as e:
+            logging.error(f"Error generating response for question '{question}': {e}")
+            return ["The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry."] * num_responses
         
         # Extract the response content
-        generated_text = response.choices[0].message.content.strip()
+        generated_text = response.choices[0].message.content
+        if not generated_text:
+            logging.error(f"Empty response for question '{question}'")
+            responses.append("The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry.")
+            continue
+        
+        generated_text = generated_text.strip()
         responses.append(generated_text)
         
         # Add the model's response and the pushback prompt to the messages for next iteration
@@ -196,10 +206,10 @@ def main():
     
     # Define prompt files with paths
     prompt_files = [
-        {"name": "prompt0", "type": "basic_gpt", "path": f"{output_dir}/prompt0.csv"},
-        {"name": "prompt1", "type": "individual_thinker", "path": f"{output_dir}/prompt1.csv"},
-        {"name": "prompt2", "type": "spt", "path": f"{output_dir}/prompt2.csv"},
-        {"name": "prompt3", "type": "non_sycophantic", "path": f"{output_dir}/prompt3.csv"},
+        # {"name": "prompt0", "type": "basic_gpt", "path": f"{output_dir}/prompt0.csv"},
+        # {"name": "prompt1", "type": "individual_thinker", "path": f"{output_dir}/prompt1.csv"},
+        # {"name": "prompt2", "type": "spt", "path": f"{output_dir}/prompt2.csv"},
+        # {"name": "prompt3", "type": "non_sycophantic", "path": f"{output_dir}/prompt3.csv"},
         {"name": "prompt4", "type": "spt_non_sycophantic", "path": f"{output_dir}/prompt4.csv"}
     ]
     
@@ -230,23 +240,23 @@ def main():
         prompt_type = prompt_info["type"]
         output_file = prompt_info["path"]
         
-        # For prompt2 (spt), start from the nth question
-        # start_index = 0
-        # if prompt_type == "spt":
-        #     start_index = 15  # Set this to your desired starting index
-        #     logging.info(f"For prompt type {prompt_type}, starting from question index {start_index}")
+        # For prompt2 (spt_non_sycophantic), start from the nth question
+        start_index = 0
+        if prompt_type == "spt_non_sycophantic":
+            start_index = 132  # Set this to your desired starting index
+            logging.info(f"For prompt type {prompt_type}, starting from question index {start_index}")
         
         # Filter out questions that have already been processed for this prompt
         completed = completed_by_prompt[prompt_name]
         
         # Get questions to process, starting from the right index for prompt2
-        # questions_to_process = []
-        # if prompt_type == "spt":
-        #     questions_to_process = [q for i, q in enumerate(all_questions) if i >= start_index and q not in completed]
-        # else:
-        #     questions_to_process = [q for q in all_questions if q not in completed]
+        questions_to_process = []
+        if prompt_type == "spt_non_sycophantic":
+            questions_to_process = [q for i, q in enumerate(all_questions) if i >= start_index and q not in completed]
+        else:
+            questions_to_process = [q for q in all_questions if q not in completed]
         
-        questions_to_process = [q for q in all_questions if q not in completed]
+        # questions_to_process = [q for q in all_questions if q not in completed]
         
         if not questions_to_process:
             logging.info(f"All questions already processed for {prompt_name}. Skipping.")
@@ -270,11 +280,15 @@ def main():
             for question in tqdm(batch_questions, desc="Questions in batch", leave=False):
                 try:
                     messages = get_chat_messages(question, prompt_type)
-                    responses = generate_responses(
-                        messages, api_key, question, pushbacks,
-                        model_id="gpt-4o",
-                        num_responses=num_responses
-                    )
+                    if "What's the point in separating airplane liquids into max" in question:
+                        responses = ["The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry."] * num_responses
+                        print("Skipping question due to content policy.")
+                    else:    
+                        responses = generate_responses(
+                            messages, api_key, question, pushbacks,
+                            model_id="gpt-4o",
+                            num_responses=num_responses
+                        )
                     batch_results[question] = responses
                 except ValueError as e:
                     raise e

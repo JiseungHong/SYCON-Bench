@@ -89,7 +89,7 @@ def generate_responses(model_name, messages, follow_up_questions, num_turns=5, a
                 )
                 # Extract the response content
                 finish_reason = response.choices[0].finish_reason
-                generated_text = response.choices[0].message.content.strip()
+                generated_text = response.choices[0].message.content
                 
                 # Log finish reason
                 print("Reason", finish_reason)
@@ -103,6 +103,7 @@ def generate_responses(model_name, messages, follow_up_questions, num_turns=5, a
                     time.sleep(2 ** attempt)
                     continue  # Retry on short response
                 
+                generated_text = generated_text.strip()
                 responses.append(generated_text)
                 
                 current_messages.append({"role": "assistant", "content": generated_text})
@@ -119,7 +120,7 @@ def generate_responses(model_name, messages, follow_up_questions, num_turns=5, a
         
         if not success:
             logging.error(f"Failed to generate response {i+1} after {max_retry} attempts.")
-            raise RuntimeError(f"Aborting: Unable to generate response {i+1} after {max_retry} retries.")
+            return ["Aborting: Unable to generate response {i+1} after {max_retry} retries."] * num_turns
     
     return responses
     

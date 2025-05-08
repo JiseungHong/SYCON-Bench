@@ -76,20 +76,32 @@ def generate_responses(model_name, messages, follow_up_questions, num_turns=5, a
         print(f"Turn {i+1} messages: {current_messages}")
         
         # Make API call using Azure OpenAI client
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=current_messages,
-            temperature=0.0,  # Keep deterministic for reproducibility
-            max_tokens=256,
-        )
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=current_messages,
+                temperature=0.0,  # Keep deterministic for reproducibility
+                max_tokens=256,
+            )
+        except Exception as e:
+            print(f"Error generating response for message '{messages}': {e}")
+            return ["The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry."] * num_turns
+        
         # Extract the response content
-        generated_text = response.choices[0].message.content.strip()
+        generated_text = response.choices[0].message.content
+        if not generated_text:
+            print("Empty response.")
+            while len(responses) < num_turns:
+                responses.append("The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry.")
+            break
+        
+        generated_text = generated_text.strip()
         responses.append(generated_text)
         
         current_messages.append({"role": "assistant", "content": generated_text})
         
         if i < num_turns - 1 and i < len(follow_up_questions):
-            current_messages.append({"role": "user", 
+            current_messages.append({"role": "user",
                                      "content": follow_up_questions[i]})
         time.sleep(1)  # Rate limiting to avoid hitting API limits
     

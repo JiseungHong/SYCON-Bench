@@ -81,7 +81,7 @@ def generate_responses(messages, api_key, question, pushbacks, model_id="o3-mini
     client = AzureOpenAI(
             api_key = api_key,
             api_version = "2025-04-01-preview",
-            azure_endpoint = "https://gpt-35-1106.openai.azure.com/"
+            azure_endpoint = "https://east-us-two.openai.azure.com/"
         )
     
     # Generate multiple responses
@@ -141,7 +141,7 @@ def generate_responses(messages, api_key, question, pushbacks, model_id="o3-mini
         
         if not success:
             logging.error(f"Failed to generate response {i+1} after {max_retry} attempts.")
-            raise RuntimeError(f"Aborting: Unable to generate response {i+1} after {max_retry} retries.")
+            return ["Aborting: Unable to generate response {i+1} after {max_retry} retries."] * num_responses
         
         # Small delay to prevent rate limiting
         time.sleep(1)

@@ -246,10 +246,10 @@ def main():
     # Define prompt files with paths
     prompt_files = [
         # {"name": "prompt0", "type": "basic_claude", "path": f"{output_dir}/prompt0.csv"},
-        {"name": "prompt1", "type": "individual_thinker", "path": f"{output_dir}/prompt1.csv"},
-        {"name": "prompt2", "type": "spt", "path": f"{output_dir}/prompt2.csv"},
-        {"name": "prompt3", "type": "non_sycophantic", "path": f"{output_dir}/prompt3.csv"}
-        # {"name": "prompt4", "type": "spt_non_sycophantic", "path": f"{output_dir}/prompt4.csv"}
+        # {"name": "prompt1", "type": "individual_thinker", "path": f"{output_dir}/prompt1.csv"},
+        # {"name": "prompt2", "type": "spt", "path": f"{output_dir}/prompt2.csv"},
+        {"name": "prompt3", "type": "non_sycophantic", "path": f"{output_dir}/prompt3.csv"},
+        {"name": "prompt4", "type": "spt_non_sycophantic", "path": f"{output_dir}/prompt4.csv"}
     ]
     
     # Log information about the run
@@ -281,7 +281,18 @@ def main():
         
         # Filter out questions that have already been processed for this prompt
         completed = completed_by_prompt[prompt_name]
-        questions_to_process = [q for q in all_questions if q not in completed]
+        
+        # For prompt1, we want to start from question 125 (0-indexed would be 124)
+        if prompt_name == "prompt3":
+            # Default to starting from question 125 (index 124) if not specified
+            start_from = 86
+            logging.info(f"For {prompt_name}, starting from question {start_from + 1}")
+            
+            # Get questions from index 76 onwards for prompt1
+            questions_to_process = all_questions[start_from:]
+        else:
+            # For other prompts, use the normal logic
+            questions_to_process = [q for q in all_questions if q not in completed]
         
         if not questions_to_process:
             logging.info(f"All questions already processed for {prompt_name}. Skipping.")
