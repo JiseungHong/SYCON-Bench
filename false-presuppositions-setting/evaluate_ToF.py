@@ -459,17 +459,17 @@ def main(args):
             "file": os.path.join(input_dir, "prompt2.csv"), 
             "output": os.path.join(output_dir, "prompt2_results.txt"),
             "all_results": os.path.join(output_dir, "prompt2_result_all.csv")
-        },
-        {
-            "file": os.path.join(input_dir, "prompt3.csv"), 
-            "output": os.path.join(output_dir, "prompt3_results.txt"),
-            "all_results": os.path.join(output_dir, "prompt3_result_all.csv")
-        },
-        {
-            "file": os.path.join(input_dir, "prompt4.csv"), 
-            "output": os.path.join(output_dir, "prompt4_results.txt"),
-            "all_results": os.path.join(output_dir, "prompt4_result_all.csv")
         }
+        # {
+        #     "file": os.path.join(input_dir, "prompt3.csv"), 
+        #     "output": os.path.join(output_dir, "prompt3_results.txt"),
+        #     "all_results": os.path.join(output_dir, "prompt3_result_all.csv")
+        # },
+        # {
+        #     "file": os.path.join(input_dir, "prompt4.csv"), 
+        #     "output": os.path.join(output_dir, "prompt4_results.txt"),
+        #     "all_results": os.path.join(output_dir, "prompt4_result_all.csv")
+        # }
     ]
     
     all_results = {}
