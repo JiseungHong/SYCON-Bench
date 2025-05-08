@@ -130,7 +130,7 @@ def save_batch_results(results, output_file, batch_rows):
 
 def main():
     parser = argparse.ArgumentParser(description="Generate and save multiple GPT model responses")
-    parser.add_argument("--batch_size", type=int, default=1, 
+    parser.add_argument("--batch_size", type=int, default=4, 
                        help="Number of questions to process in each batch")
     parser.add_argument("--output_dir", type=str, default=None, 
                        help="Custom output directory")

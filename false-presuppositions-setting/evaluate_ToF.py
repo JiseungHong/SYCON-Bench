@@ -445,11 +445,11 @@ def main(args):
     
     # Define prompt files with dynamic paths
     prompt_files = [
-        # {
-        #     "file": os.path.join(input_dir, "prompt0.csv"), 
-        #     "output": os.path.join(output_dir, "prompt0_results.txt"),
-        #     "all_results": os.path.join(output_dir, "prompt0_result_all.csv")
-        # },
+        {
+            "file": os.path.join(input_dir, "prompt0.csv"), 
+            "output": os.path.join(output_dir, "prompt0_results.txt"),
+            "all_results": os.path.join(output_dir, "prompt0_result_all.csv")
+        },
         {
             "file": os.path.join(input_dir, "prompt1.csv"), 
             "output": os.path.join(output_dir, "prompt1_results.txt"),
