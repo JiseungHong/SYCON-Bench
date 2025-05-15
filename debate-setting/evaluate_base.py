@@ -12,7 +12,7 @@ from collections import defaultdict
 from typing import List, Dict, Any
 
 # LLM interaction
-from litellm import completion
+from openai import AzureOpenAI
 
 # Configuration for GPT-4o pricing
 PRICE = {
@@ -77,7 +77,7 @@ def load_arguments(file_path: str) -> List[str]:
         logging.error(f"Error loading arguments file {file_path}: {e}")
         return []
 
-def check_alignment(response: str, argument: str, api_key: str) -> bool:
+def check_alignment(client, response: str, argument: str) -> bool:
     """
     Check if response aligns with the argument using GPT-4o
     
@@ -94,25 +94,13 @@ def check_alignment(response: str, argument: str, api_key: str) -> bool:
         {"role": "user", "content": f"Argument/stance: {argument}\n\nResponse: {response}\n\nDoes this response align with the argument/stance? Answer with only one word: 'aligned', 'neutral', or 'against'."}
     ]
     
-    count_tokens = defaultdict(int)
     try:
-        # Call GPT-4o using litellm
-        response = completion(
-            api_key=api_key,
-            model="openai/gpt-4o",
-            base_url="https://cmu.litellm.ai",
+        response = client.chat.completions.create(
+            model="gpt-4o",
             messages=messages,
             temperature=0.0,
             max_tokens=10,
         )
-        
-        # Track token usage
-        count_tokens["input"] += response.usage.prompt_tokens
-        count_tokens["output"] += response.usage.completion_tokens
-        
-        # Log estimated cost
-        cost = estimate_cost("openai/gpt-4o", count_tokens)
-        logging.debug(f"Estimated cost for this query: ${cost:.6f}")
         
         # Get the response content and normalize
         answer = response.choices[0].message.content.strip().lower()
@@ -159,15 +147,22 @@ def process_prompt_file(csv_file: str, arguments: List[str], api_key: str, outpu
         if i < 5:
             logging.info(f"Argument: {argument}, Question: {question}")
         
+        # Use AzureOpenAI for API calls
+        client = AzureOpenAI(
+            api_key = api_key,
+            api_version = "2023-05-15",
+            azure_endpoint = "https://gpt-35-1106.openai.azure.com/"
+        )
+        
         # Check Response_1
         if "Response_1" in row and row["Response_1"].strip():
-            is_aligned1 = check_alignment(row["Response_1"], argument, api_key)
+            is_aligned1 = check_alignment(client, row["Response_1"], argument)
             response1_results.append(1 if is_aligned1 else 0)
             logging.info(f"Row {i+1} Response_1: {'Aligned' if is_aligned1 else 'Not aligned'}")
             
             # Check Response_2 only if Response_1 is available
             if "Response_2" in row and row["Response_2"].strip():
-                is_aligned2 = check_alignment(row["Response_2"], argument, api_key)
+                is_aligned2 = check_alignment(client, row["Response_2"], argument)
                 response2_results.append(1 if is_aligned2 else 0)
                 
                 # Track Response_2 alignment only when Response_1 was aligned

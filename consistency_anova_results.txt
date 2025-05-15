@@ -1,0 +1,177 @@
+=== Setting: debate-setting ===
+[ANOVA] Prompt 0: Across models
+F-statistic = 110.4210, p-value = 6.7036e-158
+
+[ANOVA] Prompts 1-4 within model: Meta-Llama-3-8B-Instruct
+F-statistic = 58.9151, p-value = 1.6443e-31
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-7B-Instruct
+F-statistic = 76.0648, p-value = 7.1664e-39
+
+[ANOVA] Prompts 1-4 within model: Llama-3-2.1-8B
+Test failed: At least two samples are required; got 0.
+
+[ANOVA] Prompts 1-4 within model: gpt-4o
+F-statistic = 0.2360, p-value = 8.7127e-01
+
+[ANOVA] Prompts 1-4 within model: o3-mini
+F-statistic = 0.0401, p-value = 9.8928e-01
+
+[ANOVA] Prompts 1-4 within model: claude
+F-statistic = 1.3102, p-value = 2.7067e-01
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-72B-Instruct
+F-statistic = 3.1364, p-value = 2.5432e-02
+
+[ANOVA] Prompts 1-4 within model: deepseek-v3
+F-statistic = 14.6976, p-value = 4.2993e-09
+
+[ANOVA] Prompts 1-4 within model: gemma-2-9b-it
+F-statistic = 22.4825, p-value = 1.8405e-13
+
+[ANOVA] Prompts 1-4 within model: deepseek-r1
+F-statistic = 11.3198, p-value = 3.8690e-07
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-14B-Instruct
+F-statistic = 37.5366, p-value = 2.2775e-21
+
+[ANOVA] Prompts 1-4 within model: Meta-Llama-3.1-8B-Instruct
+F-statistic = 88.0458, p-value = 1.1491e-43
+
+[ANOVA] Prompts 1-4 within model: Llama-3.3-70B-Instruct
+F-statistic = 3.4899, p-value = 1.5838e-02
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-7B
+Test failed: At least two samples are required; got 0.
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-72B
+Test failed: At least two samples are required; got 0.
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-14B
+Test failed: At least two samples are required; got 0.
+
+[ANOVA] Prompts 1-4 within model: llama-3.1-70B
+Test failed: At least two samples are required; got 0.
+
+=== Setting: ethical-setting ===
+[ANOVA] Prompt 0: Across models
+F-statistic = 18.9608, p-value = 1.7475e-52
+
+[ANOVA] Prompts 1-4 within model: deepseek-chat
+F-statistic = 45.5784, p-value = 3.4560e-27
+
+[ANOVA] Prompts 1-4 within model: Llama-3.1-8B-Instruct
+F-statistic = 14.8381, p-value = 2.0827e-09
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-7B-Instruct
+F-statistic = 12.1793, p-value = 8.4716e-08
+
+[ANOVA] Prompts 1-4 within model: gpt-4o
+F-statistic = 23.1693, p-value = 2.1918e-14
+
+[ANOVA] Prompts 1-4 within model: o3-mini
+F-statistic = 20.6862, p-value = 6.5006e-13
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-72B-Instruct
+F-statistic = 10.1285, p-value = 1.4924e-06
+
+[ANOVA] Prompts 1-4 within model: gemma2-9b-it
+F-statistic = 4.6729, p-value = 3.0366e-03
+
+[ANOVA] Prompts 1-4 within model: deepseek-reasoner
+F-statistic = 23.7263, p-value = 1.0281e-14
+
+[ANOVA] Prompts 1-4 within model: claude-3-7-sonnet-20250219
+F-statistic = 18.8400, p-value = 8.2034e-12
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-14B-Instruct
+F-statistic = 10.7670, p-value = 6.1044e-07
+
+[ANOVA] Prompts 1-4 within model: Llama-3.1-8B
+Test failed: At least two samples are required; got 0.
+
+[ANOVA] Prompts 1-4 within model: gemma-2-9b
+Test failed: At least two samples are required; got 0.
+
+[ANOVA] Prompts 1-4 within model: Llama3.3-70B-Instruct
+F-statistic = 10.0508, p-value = 1.6638e-06
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-7B
+Test failed: At least two samples are required; got 0.
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-72B
+Test failed: At least two samples are required; got 0.
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-14B
+Test failed: At least two samples are required; got 0.
+
+[ANOVA] Prompts 1-4 within model: Llama-3.1-70B
+Test failed: At least two samples are required; got 0.
+
+=== Setting: false-presuppositions-setting ===
+[ANOVA] Prompt 0: Across models
+F-statistic = 14.2568, p-value = 5.1303e-47
+
+[ANOVA] Prompts 1-4 within model: Llama-3.1-8B-Instruct
+F-statistic = 0.5231, p-value = 6.6651e-01
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-7B-Instruct
+F-statistic = 0.3632, p-value = 7.7962e-01
+
+[ANOVA] Prompts 1-4 within model: gpt-4o
+F-statistic = 0.5606, p-value = 6.4115e-01
+
+[ANOVA] Prompts 1-4 within model: o3-mini
+F-statistic = 0.1684, p-value = 9.1774e-01
+
+[ANOVA] Prompts 1-4 within model: claude
+F-statistic = 1.9359, p-value = 1.2227e-01
+
+[ANOVA] Prompts 1-4 within model: Llama-3.1-8B-Instruct_seed411
+F-statistic = 0.5677, p-value = 6.3643e-01
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-14B-Instruct_seed411
+F-statistic = 0.2889, p-value = 8.3344e-01
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-72B-Instruct
+F-statistic = 0.6814, p-value = 5.6354e-01
+
+[ANOVA] Prompts 1-4 within model: gemma2-9b-it
+F-statistic = 0.7378, p-value = 5.2967e-01
+
+[ANOVA] Prompts 1-4 within model: deepseek-v3
+F-statistic = 1.2566, p-value = 2.8817e-01
+
+[ANOVA] Prompts 1-4 within model: deepseek-r1
+F-statistic = 0.2097, p-value = 8.8968e-01
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-14B-Instruct
+F-statistic = 0.2647, p-value = 8.5083e-01
+
+[ANOVA] Prompts 1-4 within model: Llama-3.1-8B
+Test failed: At least two samples are required; got 0.
+
+[ANOVA] Prompts 1-4 within model: gemma2-9B
+Test failed: At least two samples are required; got 0.
+
+[ANOVA] Prompts 1-4 within model: Llama-3.1-8B-Instruct_seed307
+F-statistic = 0.6928, p-value = 5.5659e-01
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-14B-Instruct_seed307
+F-statistic = 0.2385, p-value = 8.6954e-01
+
+[ANOVA] Prompts 1-4 within model: Llama-3.3-70B-Instruct
+F-statistic = 1.0198, p-value = 3.8315e-01
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-7B
+Test failed: At least two samples are required; got 0.
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-72B
+Test failed: At least two samples are required; got 0.
+
+[ANOVA] Prompts 1-4 within model: Qwen2.5-14B
+Test failed: At least two samples are required; got 0.
+
+[ANOVA] Prompts 1-4 within model: Llama-3.1-70B
+Test failed: At least two samples are required; got 0.
+

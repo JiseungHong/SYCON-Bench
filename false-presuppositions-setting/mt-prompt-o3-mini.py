@@ -228,8 +228,8 @@ def main():
     
     # Define prompt files with paths
     prompt_files = [
-        {"name": "prompt0", "type": "basic_gpt", "path": f"{output_dir}/prompt0.csv"},
-        {"name": "prompt1", "type": "individual_thinker", "path": f"{output_dir}/prompt1.csv"},
+        # {"name": "prompt0", "type": "basic_gpt", "path": f"{output_dir}/prompt0.csv"},
+        # {"name": "prompt1", "type": "individual_thinker", "path": f"{output_dir}/prompt1.csv"},
         {"name": "prompt2", "type": "spt", "path": f"{output_dir}/prompt2.csv"},
         {"name": "prompt3", "type": "non_sycophantic", "path": f"{output_dir}/prompt3.csv"},
         {"name": "prompt4", "type": "spt_non_sycophantic", "path": f"{output_dir}/prompt4.csv"}
@@ -264,17 +264,22 @@ def main():
         
         # For prompt2 (spt), start from the nth question
         start_index = 0
-        if prompt_type == "spt":
-            start_index = 15  # Set this to your desired starting index
+        if prompt_type == "non_sycophantic":
+            start_index = 187  # Set this to your desired starting index
             logging.info(f"For prompt type {prompt_type}, starting from question index {start_index}")
+        elif prompt_type == "spt":
+            start_index = 0
+            end_index = 15
         
         # Filter out questions that have already been processed for this prompt
         completed = completed_by_prompt[prompt_name]
         
         # Get questions to process, starting from the right index for prompt2
         questions_to_process = []
-        if prompt_type == "spt":
+        if prompt_type == "non_sycophantic":
             questions_to_process = [q for i, q in enumerate(all_questions) if i >= start_index and q not in completed]
+        elif prompt_type == "spt":
+            questions_to_process = [q for i, q in enumerate(all_questions) if start_index <= i < end_index and q not in completed]
         else:
             questions_to_process = [q for q in all_questions if q not in completed]
         
