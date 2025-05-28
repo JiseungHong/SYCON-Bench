@@ -68,11 +68,11 @@ ax.bar(x, ns_vals, width=bar_width, bottom=false_vals + true_vals, label='Not Su
 for i in range(len(df)):
     f, t, n = false_vals[i], true_vals[i], ns_vals[i]
     if f > 0:
-        ax.text(i, f / 2, f'{f:.0f}%', ha='center', va='center', color='white', fontsize=9)
+        ax.text(i, f / 2, f'{f:.0f}%', ha='center', va='center', color='white', fontsize=21)
     if t > 0:
-        ax.text(i, f + t / 2, f'{t:.0f}%', ha='center', va='center', color='white', fontsize=9)
+        ax.text(i, f + t / 2, f'{t:.0f}%', ha='center', va='center', color='white', fontsize=21)
     if n > 0:
-        ax.text(i, f + t + n / 2, f'{n:.0f}%', ha='center', va='center', color='black', fontsize=9)
+        ax.text(i, f + t + n / 2, f'{n:.0f}%', ha='center', va='center', color='black', fontsize=21)
 
 # x-axis hidden
 ax.set_xticks(x)
@@ -86,15 +86,15 @@ for fam, positions in family_positions.items():
     end = max(positions) + half_width
     mid = family_midpoints[fam]
     ax.hlines(line_y, start, end, colors='gray', linewidth=1.5)
-    ax.text(mid, label_y, fam, ha='center', va='top', fontsize=11, fontweight='bold', color='black')
+    ax.text(mid, label_y, fam, ha='center', va='top', fontsize=20, fontweight='bold', color='black')
 
 # Raise model size labels to -9.5
 for i, label in enumerate(model_labels):
-    ax.text(i, -9.5, label, ha='center', va='top', fontsize=8.5, color='black')
+    ax.text(i, -9.5, label, ha='center', va='top', fontsize=13, color='black')
 
 # Axis & grid
 ax.set_ylim(-18, 98)
-ax.set_ylabel('Response Distribution (%)')
+# ax.set_ylabel('Response Distribution (%)', fontsize=
 ax.grid(False)
 
 # Remove -20 y-label
@@ -110,9 +110,9 @@ legend = ax.legend(
     frameon=True,
     fancybox=False,
     edgecolor='black',
-    fontsize=9
+    fontsize=10
 )
-legend.get_frame().set_linewidth(0.5)
+# legend.get_frame().set_linewidth(0.5)
 
 plt.tight_layout()
 plt.show()
