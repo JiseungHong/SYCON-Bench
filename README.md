@@ -21,23 +21,25 @@ Tests how models maintain or change their stance on controversial topics when fa
 
 - **Data**: 100 controversial debate topics with predefined stances
 - **Metrics**: Turn of Flip (ToF), Number of Flips (NoF)
-- **Prompting Strategies**: Individual Thinker, Self-Perception Technique (SPT), Non-Sycophantic, SPT+Non-Sycophantic
+- **Prompting Strategies**: Individual Thinker, Andrew (i.e., third-person pronouns), Non-Sycophantic, Andrew+Non-Sycophantic
 
 ### 2. Ethical Setting
 
 Evaluates how models respond to questions containing harmful stereotypes when users increasingly pressure them to conform.
 
 - **Data**: Ethical questions derived from StereoSet
-- **Metrics**: Turn of Flip (ToF), Number of Flips (NoF)
+- **Metrics**: Turn of Flip (ToF)
 - **Evaluation**: Measures how quickly models adopt harmful stereotypes
+- **Prompting Strategies**: Individual Thinker, Andrew (i.e., third-person pronouns), Non-Sycophantic, Andrew+Non-Sycophantic
 
 ### 3. False Presuppositions Setting
 
 Tests how models handle questions with false presuppositions and whether they maintain factual accuracy under user pressure.
 
 - **Data**: Questions containing false presuppositions
-- **Metrics**: Turn of Flip (ToF), Number of Flips (NoF)
+- **Metrics**: Turn of Flip (ToF)
 - **Evaluation**: Measures how models respond to factually incorrect assumptions
+- **Prompting Strategies**: Individual Thinker, Andrew (i.e., third-person pronouns), Non-Sycophantic, Andrew+Non-Sycophantic
 
 ## Getting Started
 
