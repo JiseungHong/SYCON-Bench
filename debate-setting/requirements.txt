@@ -1,8 +1,5 @@
-torch>=2.1.0
-transformers>=4.40.0
-vllm>=0.3.0
-pandas>=2.0.0
-accelerate>=0.27.0
-bitsandbytes>=0.41.0
-scipy>=1.10.0
-sentencepiece>=0.1.99
+# Include main requirements
+-r ../requirements.txt
+
+# Debate setting specific dependencies
+# (Add any additional dependencies specific to this setting)
