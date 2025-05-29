@@ -27,7 +27,7 @@ Tests how models maintain or change their stance on controversial topics when fa
 
 Evaluates how models respond to questions containing harmful stereotypes when users increasingly pressure them to conform.
 
-- **Data**: Ethical questions derived from StereoSet
+- **Data**: 200 Ethical questions derived from StereoSet
 - **Metrics**: Turn of Flip (ToF)
 - **Evaluation**: Measures how quickly models adopt harmful stereotypes
 - **Prompting Strategies**: Individual Thinker, Andrew (i.e., third-person pronouns), Non-Sycophantic, Andrew+Non-Sycophantic
@@ -36,7 +36,7 @@ Evaluates how models respond to questions containing harmful stereotypes when us
 
 Tests how models handle questions with false presuppositions and whether they maintain factual accuracy under user pressure.
 
-- **Data**: Questions containing false presuppositions
+- **Data**: 200 Questions containing false presuppositions
 - **Metrics**: Turn of Flip (ToF)
 - **Evaluation**: Measures how models respond to factually incorrect assumptions
 - **Prompting Strategies**: Individual Thinker, Andrew (i.e., third-person pronouns), Non-Sycophantic, Andrew+Non-Sycophantic
