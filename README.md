@@ -128,14 +128,17 @@ Our analysis of 17 LLMs across the three settings revealed:
 If you use SYCON-Bench in your research, please cite our paper:
 
 ```
-@article{sycon2025,
-  title={Measuring Sycophancy of Language Models in Multi-turn Dialogues},
-  author={...},
-  journal={...},
-  year={2025}
+@misc{hong2025measuringsycophancylanguagemodels,
+      title={Measuring Sycophancy of Language Models in Multi-turn Dialogues}, 
+      author={Jiseung Hong and Grace Byun and Seungone Kim and Kai Shu},
+      year={2025},
+      eprint={2505.23840},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2505.23840}, 
 }
 ```
 
 ## License
 
-[MIT License](LICENSE)
+Distributed under the MIT License. See [`LICENSE`](./LICENSE) for more information.
