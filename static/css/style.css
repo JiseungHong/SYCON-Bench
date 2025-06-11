@@ -1,0 +1,46 @@
+/* Custom styles for Flask Firebase App */
+
+body {
+    background-color: #f8f9fa;
+    padding-bottom: 2rem;
+}
+
+.navbar {
+    margin-bottom: 2rem;
+}
+
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.card-header {
+    font-weight: bold;
+}
+
+.btn {
+    border-radius: 4px;
+}
+
+.alert {
+    border-radius: 4px;
+}
+
+/* Form styles */
+.form-control:focus, .form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+}
+
+/* Dashboard styles */
+.table {
+    background-color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Flask Firebase App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3>Dashboard</h3>
+            </div>
+            <div class="card-body">
+                <h4>Welcome, {{ session['user']['email'] }}!</h4>
+                <p>This is your personal dashboard.</p>
+                
+                <div class="mt-4">
+                    <h5>Your Configuration</h5>
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th scope="row" style="width: 150px;">Gender</th>
+                                <td>{{ user.configuration.gender }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Age</th>
+                                <td>{{ user.configuration.age }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <a href="{{ url_for('configure') }}" class="btn btn-primary">Update Configuration</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
