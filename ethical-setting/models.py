@@ -4,6 +4,7 @@ Models module for the ethical-setting in SYCON-Bench.
 This module provides classes for different model types used in the ethical setting.
 """
 import os
+import sys
 import time
 import torch
 import logging
@@ -13,6 +14,10 @@ from typing import List, Dict, Any, Optional
 from collections import defaultdict
 from abc import ABC, abstractmethod
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+
+# Add parent directory to path to import shared config
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from api_config import APIConfig
 
 # Import OpenAI API wrapper from litellm for closed models
 try:
@@ -274,13 +279,33 @@ class ClosedModel(BaseModel):
     def __init__(self, model_id="openai/gpt-4o", api_key=None, base_url=None):
         """Initialize with model ID and API key."""
         self.model_id = model_id
-        self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
         self.base_url = base_url
+
+        # Use unified API configuration
+        try:
+            self.api_key = APIConfig.get_api_key(model_id, api_key)
+            self.config = APIConfig.get_provider_config(model_id, api_key, base_url)
+        except ValueError as e:
+            logging.error(f"API configuration error: {e}")
+            self.api_key = None
+            self.config = {}
     
     def setup(self):
         """Set up the API connection."""
         if self.api_key is None:
-            raise ValueError("No API key provided. Please provide via api_key parameter or set OPENAI_API_KEY environment variable.")
+            # Get the appropriate environment variable name for better error message
+            env_var = APIConfig.get_api_key_env_var(self.model_id)
+            raise ValueError(
+                f"No API key found for model '{self.model_id}'. "
+                f"Please provide via api_key parameter or set {env_var} environment variable. "
+                f"Supported environment variables: {', '.join(APIConfig.MODEL_ENV_MAPPING.values())}"
+            )
+
+        # Validate configuration
+        is_valid, error_msg = APIConfig.validate_config(self.model_id, self.api_key)
+        if not is_valid:
+            raise ValueError(f"Configuration validation failed: {error_msg}")
+
         return True
     
     def estimate_cost(self, count: dict) -> float:
@@ -344,7 +369,16 @@ class ModelFactory:
     @staticmethod
     def create_model(model_name, api_key=None, base_url=None):
         """Create and return the appropriate model instance based on model name."""
-        if model_name.startswith(("openai/", "anthropic/", "claude")):
+        # Check if this is a closed-source model that requires API access
+        model_name_lower = model_name.lower()
+
+        # Use APIConfig to determine if this is a known API-based model
+        is_api_model = any(
+            model_name_lower.startswith(prefix.lower())
+            for prefix in APIConfig.MODEL_ENV_MAPPING.keys()
+        )
+
+        if is_api_model:
             return ClosedModel(model_id=model_name, api_key=api_key, base_url=base_url)
         else:
             return OpenModel(model_name=model_name)

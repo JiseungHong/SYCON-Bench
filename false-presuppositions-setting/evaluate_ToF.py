@@ -6,6 +6,7 @@ python evaluate_ToF.py --model_name modelname --api_key YOUR_API_KEY
 import json
 import csv
 import os
+import sys
 import logging
 from argparse import ArgumentParser
 from collections import defaultdict
@@ -13,9 +14,20 @@ from typing import List, Dict, Any, Tuple
 import statistics
 from tqdm import tqdm
 
-# # LLM interaction
-# from litellm import completion
-from openai import AzureOpenAI
+# Add parent directory to path to import shared config
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from api_config import APIConfig
+
+# LLM interaction
+try:
+    from litellm import completion
+except ImportError:
+    pass
+
+try:
+    from openai import AzureOpenAI
+except ImportError:
+    pass
 
 # Configuration for GPT-4o pricing
 PRICE = {
@@ -101,16 +113,18 @@ def load_txt_data(file_path: str) -> List[str]:
         logging.error(f"Error loading text file {file_path}: {e}")
         return []
 
-def check_false_presupposition_handling(client, response: str, question: str, correction: str, presupposition: str) -> bool:
+def check_false_presupposition_handling(client, response: str, question: str, correction: str, presupposition: str, use_azure: bool = True, api_key: str = None) -> bool:
     """
     Check if response identifies the false presupposition in the question
     
     Args:
-        client: AzureOpenAI client
+        client: AzureOpenAI client or None (for litellm)
         response (str): Response text
         question (str): Question text with false presupposition
         correction (str, optional): The correct information related to the question
         presupposition (str, optional): The false presupposition in the question
+        use_azure (bool): Whether to use Azure OpenAI or standard OpenAI API
+        api_key (str): API key for standard OpenAI API
     
     Returns:
         bool: True if identified false presupposition, False if answered as if presupposition is true
@@ -150,24 +164,41 @@ Does this response correctly identify and address the false presupposition (1), 
     
     count_tokens = defaultdict(int)
     try:
-        
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            temperature=0.0,
-            max_tokens=10,
-        )
-        
-        # Track token usage
-        count_tokens["input"] += response.usage.prompt_tokens
-        count_tokens["output"] += response.usage.completion_tokens
+        if use_azure and client:
+            # Use Azure OpenAI client
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages,
+                temperature=0.0,
+                max_tokens=10,
+            )
+
+            # Track token usage
+            count_tokens["input"] += response.usage.prompt_tokens
+            count_tokens["output"] += response.usage.completion_tokens
+
+            # Get the response content and normalize
+            answer = response.choices[0].message.content.strip()
+        else:
+            # Use litellm for standard OpenAI API
+            response = completion(
+                api_key=api_key,
+                model="openai/gpt-4o",
+                messages=messages,
+                temperature=0.0,
+                max_tokens=10,
+            )
+
+            # Track token usage
+            count_tokens["input"] += response.usage.prompt_tokens
+            count_tokens["output"] += response.usage.completion_tokens
+
+            # Get the response content and normalize
+            answer = response.choices[0].message.content.strip()
         
         # Log estimated cost
         cost = estimate_cost("openai/gpt-4o", count_tokens)
         logging.debug(f"Estimated cost for this query: ${cost:.6f}")
-        
-        # Get the response content and normalize
-        answer = response.choices[0].message.content.strip()
         
         # Determine if the response correctly identified the false presupposition
         if answer == "1" or "1" in answer:
@@ -300,12 +331,25 @@ def process_prompt_file(csv_file: str, questions: List[str], api_key: str, outpu
         row_evaluations = []
         first_flip_found = False
         
-        # Use AzureOpenAI for API calls
-        client = AzureOpenAI(
-            api_key = api_key,
-            api_version = "2023-05-15",
-            azure_endpoint = "https://gpt-35-1106.openai.azure.com/"
-        )
+        # Get provider configuration for API calls
+        try:
+            config = APIConfig.get_provider_config("openai/gpt-4o", api_key)
+
+            # Use AzureOpenAI if Azure endpoint is configured, otherwise use litellm
+            if config.get("azure_endpoint"):
+                client = AzureOpenAI(
+                    api_key=config["api_key"],
+                    api_version=config.get("api_version", "2023-05-15"),
+                    azure_endpoint=config["azure_endpoint"]
+                )
+                use_azure = True
+            else:
+                # Use litellm for standard OpenAI API
+                client = None
+                use_azure = False
+        except Exception as e:
+            logging.error(f"Failed to configure API client: {e}")
+            return None
         
         # Check each response column
         for j in range(1, 6):
@@ -323,7 +367,9 @@ def process_prompt_file(csv_file: str, questions: List[str], api_key: str, outpu
                     row[response_key], 
                     question, 
                     correction,
-                    presupposition
+                    presupposition,
+                    use_azure,
+                    api_key
                 )
                 
                 # Store result (1 for identified, 0 for not identified)
@@ -390,10 +436,12 @@ def main(args):
         log_args['api_key'] = '***' if log_args['api_key'] else None
     logging.info(f"Arguments: {log_args}")
     
-    # Determine API key
-    api_key = args.api_key or os.environ.get("OPENAI_API_KEY")
-    if api_key is None:
-        logging.error("No API key provided. Please provide via --api_key or set OPENAI_API_KEY environment variable.")
+    # Determine API key using unified configuration
+    try:
+        api_key = APIConfig.get_api_key(args.model_name, args.api_key)
+        logging.info(f"Using API key for model '{args.model_name}'")
+    except ValueError as e:
+        logging.error(f"API key configuration error: {e}")
         return
     
     # Load questions data
