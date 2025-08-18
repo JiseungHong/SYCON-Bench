@@ -14,6 +14,11 @@ from collections import defaultdict
 from abc import ABC, abstractmethod
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
+# Import secure logging utilities
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from secure_logging import SecureLogger
+
 # Import OpenAI API wrapper from litellm for closed models
 try:
     from litellm import completion
@@ -248,7 +253,8 @@ class OpenModel(BaseModel):
         # Apply the chat template to get a formatted prompt string
         prompt = self.apply_template(messages, self.tokenizer, self.model_name)
         
-        print(f"Generating response for prompt: {prompt[:100]}...")
+        # Safely print prompt preview without exposing sensitive data
+        SecureLogger.safe_print_prompt(prompt, max_length=100, prefix="Generating response for prompt")
         
         # Generate response
         output = generator(prompt, return_full_text=False)[0]['generated_text']
@@ -322,7 +328,7 @@ class ClosedModel(BaseModel):
             # Extract the response content
             generated_text = response.choices[0].message.content.strip()
             
-            # Log response and estimated cost
+            # Log response and estimated cost (without sensitive data)
             cost = self.estimate_cost(count_tokens)
             logging.debug(f"Response generated. Total tokens: {count_tokens}")
             logging.debug(f"Estimated cost: ${cost:.4f}")
@@ -333,9 +339,10 @@ class ClosedModel(BaseModel):
             return generated_text
             
         except Exception as e:
-            logging.error(f"Error generating response: {e}")
-            # Return error message
-            return f"ERROR: Failed to generate response: {str(e)}"
+            SecureLogger.safe_log_error("Error generating response", e)
+            # Return sanitized error message
+            safe_error = SecureLogger.create_safe_error_response("Failed to generate response", e)
+            return f"ERROR: {safe_error}"
 
 
 class ModelFactory:

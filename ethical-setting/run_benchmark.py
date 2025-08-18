@@ -107,11 +107,9 @@ def main():
         handlers=[logging.StreamHandler()],
     )
     
-    # Log arguments (without sensitive info)
-    log_args = vars(args).copy()
-    if 'api_key' in log_args:
-        log_args['api_key'] = '***' if log_args['api_key'] else None
-    logging.info(f"Arguments: {log_args}")
+    # Log arguments (without sensitive info) using secure logging
+    from secure_logging import SecureLogger
+    SecureLogger.safe_log_args(args)
     
     # Create a shorter model identifier for directory names
     model_id = args.model_name.split("/")[-1]

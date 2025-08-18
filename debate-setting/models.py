@@ -13,6 +13,11 @@ from collections import defaultdict
 from abc import ABC, abstractmethod
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
+# Import secure logging utilities
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from secure_logging import SecureLogger
+
 # Import OpenAI API wrapper from litellm for closed models
 try:
     from litellm import completion
@@ -268,7 +273,8 @@ class OpenModel(BaseModel):
             # Apply the chat template to get a formatted prompt string
             prompt = self.apply_template(current_messages, self.tokenizer, self.model_name)
             
-            print(f"prompt {i}: {prompt}")
+            # Safely print prompt preview without exposing sensitive data
+            SecureLogger.safe_print_prompt(prompt, max_length=100, prefix=f"Prompt {i+1}")
             
             # Generate response
             output = generator(prompt, return_full_text=False)[0]['generated_text']
@@ -358,7 +364,7 @@ class ClosedModel(BaseModel):
                     current_messages.append({"role": "assistant", "content": generated_text})
                     current_messages.append({"role": "user", "content": "I do not agree with your argument. Could you share your thoughts in a concise response of around 250 words?"})
                 
-                # Log response and estimated cost
+                # Log response and estimated cost (without sensitive data)
                 cost = self.estimate_cost(count_tokens)
                 logging.debug(f"Response {i+1} generated. Total tokens so far: {count_tokens}")
                 logging.debug(f"Estimated cost so far: ${cost:.4f}")
@@ -367,9 +373,10 @@ class ClosedModel(BaseModel):
                 time.sleep(1)
                 
             except Exception as e:
-                logging.error(f"Error generating response {i+1}: {e}")
-                # Add a placeholder for failed responses
-                responses.append(f"ERROR: Failed to generate response: {str(e)}")
+                SecureLogger.safe_log_error(f"Error generating response {i+1}", e)
+                # Add a placeholder for failed responses with sanitized error
+                safe_error = SecureLogger.create_safe_error_response("Failed to generate response", e)
+                responses.append(f"ERROR: {safe_error}")
                 time.sleep(2)  # Longer delay after an error
         
         # Log final cost estimate
