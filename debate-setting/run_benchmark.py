@@ -7,10 +7,41 @@ import os
 import argparse
 import logging
 import time
-from models import ModelFactory
+
+def validate_data(data_dir="data"):
+    """Validate the integrity of the data files."""
+    questions_path = f"{data_dir}/questions.txt"
+    arguments_path = f"{data_dir}/arguments.txt"
+
+    # Check if files exist
+    if not os.path.exists(questions_path):
+        raise FileNotFoundError(f"Error: The file '{questions_path}' was not found.")
+    if not os.path.exists(arguments_path):
+        raise FileNotFoundError(f"Error: The file '{arguments_path}' was not found.")
+
+    # Read the lines from the files
+    with open(questions_path, "r") as f:
+        questions = [line.strip() for line in f if line.strip()]
+    with open(arguments_path, "r") as f:
+        arguments = [line.strip() for line in f if line.strip()]
+
+    # Check if files are empty
+    if not questions:
+        raise ValueError(f"Error: The file '{questions_path}' is empty.")
+    if not arguments:
+        raise ValueError(f"Error: The file '{arguments_path}' is empty.")
+
+    # Check if the number of questions and arguments match
+    if len(questions) != len(arguments):
+        raise ValueError(
+            f"Error: The number of questions ({len(questions)}) in '{questions_path}' "
+            f"does not match the number of arguments ({len(arguments)}) in '{arguments_path}'."
+        )
 
 def read_data(data_dir="data"):
     """Read questions and arguments from data files."""
+    validate_data(data_dir)  # Validate data before reading
+
     # Read the questions
     with open(f"{data_dir}/questions.txt", "r") as f:
         questions = [line.strip() for line in f if line.strip()]
@@ -19,7 +50,6 @@ def read_data(data_dir="data"):
     with open(f"{data_dir}/arguments.txt", "r") as f:
         arguments = [line.strip() for line in f if line.strip()]
     
-    assert len(questions) == len(arguments), "Number of questions must match number of arguments"
     return questions, arguments
 
 def run_benchmark(model, questions, arguments, batch_size=4, num_responses=5, output_dir=None, prompt_types=None):
@@ -75,7 +105,7 @@ def run_benchmark(model, questions, arguments, batch_size=4, num_responses=5, ou
 
 def main():
     parser = argparse.ArgumentParser(description="Run SYCON-Bench debate setting benchmark")
-    parser.add_argument("model_name", type=str, help="Model name or identifier")
+    parser.add_argument("model_name", type=str, nargs='?', default=None, help="Model name or identifier (optional when using --validate)")
     parser.add_argument("--api_key", type=str, help="API key for closed models")
     parser.add_argument("--base_url", type=str, help="Base URL for API (for closed models)")
     parser.add_argument("--batch_size", type=int, default=4, help="Number of questions to process in each batch")
@@ -84,6 +114,7 @@ def main():
     parser.add_argument("--prompt_type", type=str, choices=["all", "base", "individual_thinker", "spt", "non_sycophantic", "spt_non_sycophantic"], 
                         default="all", help="Prompt type to use")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument("--validate", action="store_true", help="Validate data files without running the benchmark")
     args = parser.parse_args()
     
     # Set up logging
@@ -94,6 +125,19 @@ def main():
         handlers=[logging.StreamHandler()],
     )
     
+    # If --validate is used, just validate the data and exit
+    if args.validate:
+        try:
+            validate_data()
+            logging.info("Data validation successful.")
+        except (FileNotFoundError, ValueError) as e:
+            logging.error(f"Data validation failed: {e}")
+            return
+
+    # Check for model_name if not validating
+    if not args.model_name:
+        parser.error("the following arguments are required: model_name")
+
     # Log arguments (without sensitive info)
     log_args = vars(args).copy()
     if 'api_key' in log_args:
@@ -114,13 +158,18 @@ def main():
     logging.info(f"Number of responses per question: {args.num_responses}")
     
     # Create the model
+    from models import ModelFactory
     model = ModelFactory.create_model(args.model_name, api_key=args.api_key, base_url=args.base_url)
     
     # Set up the model
     model.setup()
     
     # Read the data
-    questions, arguments = read_data()
+    try:
+        questions, arguments = read_data()
+    except (FileNotFoundError, ValueError) as e:
+        logging.error(f"Error reading data: {e}")
+        return
     
     # Determine which prompt types to use
     if args.prompt_type == "all":
