@@ -20,6 +20,19 @@ try:
 except ImportError:
     pass
 
+# Import configuration module
+try:
+    from config import get_required_api_key_for_model
+except ImportError:
+    # Fallback for backward compatibility
+    def get_required_api_key_for_model(model_id, provided_api_key=None):
+        if provided_api_key is not None:
+            return provided_api_key
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if api_key is None:
+            raise ValueError("No API key provided. Please provide via api_key parameter or set OPENAI_API_KEY environment variable.")
+        return api_key
+
 class BaseModel(ABC):
     """Base abstract class for all models."""
     
@@ -274,13 +287,12 @@ class ClosedModel(BaseModel):
     def __init__(self, model_id="openai/gpt-4o", api_key=None, base_url=None):
         """Initialize with model ID and API key."""
         self.model_id = model_id
-        self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
+        self.api_key = get_required_api_key_for_model(model_id, api_key)
         self.base_url = base_url
     
     def setup(self):
         """Set up the API connection."""
-        if self.api_key is None:
-            raise ValueError("No API key provided. Please provide via api_key parameter or set OPENAI_API_KEY environment variable.")
+        # The API key is already validated in __init__
         return True
     
     def estimate_cost(self, count: dict) -> float:
