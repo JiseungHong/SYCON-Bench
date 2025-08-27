@@ -13,6 +13,7 @@ from typing import List, Dict, Any, Optional
 from collections import defaultdict
 from abc import ABC, abstractmethod
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+from api_key_config import get_api_key
 
 # Import OpenAI API wrapper from litellm for closed models
 try:
@@ -262,7 +263,7 @@ class OpenModel(BaseModel):
 
 class ClosedModel(BaseModel):
     """Class for closed-source models that require API access."""
-    
+
     # Configuration for API pricing
     PRICE = {
         "openai/gpt-4o": {
@@ -270,17 +271,17 @@ class ClosedModel(BaseModel):
             "output": 15 / 1e6,
         }
     }
-    
+
     def __init__(self, model_id="openai/gpt-4o", api_key=None, base_url=None):
         """Initialize with model ID and API key."""
         self.model_id = model_id
-        self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
+        self.api_key = get_api_key(model_id, api_key)
         self.base_url = base_url
-    
+
     def setup(self):
         """Set up the API connection."""
         if self.api_key is None:
-            raise ValueError("No API key provided. Please provide via api_key parameter or set OPENAI_API_KEY environment variable.")
+            raise ValueError("No API key provided. Please provide via api_key parameter or set the appropriate environment variable.")
         return True
     
     def estimate_cost(self, count: dict) -> float:
