@@ -16,8 +16,9 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 # Import OpenAI API wrapper from litellm for closed models
 try:
     from litellm import completion
-except ImportError:
-    pass
+except ImportError as e:
+    # We'll handle this in the ClosedModel.setup() method with a more informative error
+    completion = None
 
 class BaseModel(ABC):
     """Base abstract class for all models."""
@@ -305,6 +306,13 @@ class ClosedModel(BaseModel):
     
     def setup(self):
         """Set up the API connection."""
+        # Check if litellm is installed
+        if completion is None:
+            raise ImportError(
+                "litellm package is not installed. Please install it with: pip install litellm>=1.0.0\n"
+                "Alternatively, install all required dependencies with: pip install -r requirements.txt"
+            )
+
         if self.api_key is None:
             raise ValueError("No API key provided. Please provide via api_key parameter or set OPENAI_API_KEY environment variable.")
         return True
