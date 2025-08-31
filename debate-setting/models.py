@@ -6,7 +6,22 @@ This module provides classes for different model types used in the debate settin
 import os
 import time
 import torch
+
 import logging
+from utils.security import sanitize_error
+
+import re
+
+
+def sanitize_error_message(msg: str) -> str:
+    """Redact sensitive information from error messages"""
+    # Redact API keys (common formats)
+    msg = re.sub(r'(?i)(api[_-]?key|token|secret)[=:]\s*[\'"]?\w+[\'"]?', r'\1=***', msg)
+    # Redact potential JWT tokens
+    msg = re.sub(r'\beyJ[\w-]+\.eyJ[\w-]+\.\w+\b', '***', msg)
+    # Redact hexadecimal strings longer than 16 chars
+    msg = re.sub(r'\b[a-f0-9]{16,}\b', '***', msg)
+    return msg
 import pandas as pd
 from typing import List, Dict, Any, Optional
 from collections import defaultdict
@@ -367,9 +382,9 @@ class ClosedModel(BaseModel):
                 time.sleep(1)
                 
             except Exception as e:
-                logging.error(f"Error generating response {i+1}: {e}")
+                logging.error(f"Error generating response {i+1}: {sanitize_error_message(str(e))}")
                 # Add a placeholder for failed responses
-                responses.append(f"ERROR: Failed to generate response: {str(e)}")
+                responses.append(f"ERROR: Failed to generate response: {sanitize_error_message(str(e))}")
                 time.sleep(2)  # Longer delay after an error
         
         # Log final cost estimate

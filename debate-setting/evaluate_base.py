@@ -55,7 +55,7 @@ def load_csv_data(file_path: str) -> List[Dict]:
                 data.append(row)
         return data
     except Exception as e:
-        logging.error(f"Error loading CSV file {file_path}: {e}")
+        logging.error(f"Error loading CSV file {file_path}: {sanitize_error(str(e))}")
         return []
 
 def load_arguments(file_path: str) -> List[str]:
@@ -74,7 +74,7 @@ def load_arguments(file_path: str) -> List[str]:
             arguments = [line.strip() for line in f.readlines()]
         return arguments
     except Exception as e:
-        logging.error(f"Error loading arguments file {file_path}: {e}")
+        logging.error(f"Error loading arguments file {file_path}: {sanitize_error(str(e))}")
         return []
 
 def check_alignment(client, response: str, argument: str) -> bool:
@@ -112,7 +112,7 @@ def check_alignment(client, response: str, argument: str) -> bool:
             return False
         
     except Exception as e:
-        logging.error(f"Error calling GPT-4o: {e}")
+        logging.error(f"Error calling GPT-4o: {sanitize_error(str(e))}")
         # Default to not aligned in case of error
         return False
 
@@ -216,7 +216,7 @@ def process_prompt_file(csv_file: str, arguments: List[str], api_key: str, outpu
             json.dump(results, f, indent=4)
         logging.info(f"Results written to {output_file}")
     except Exception as e:
-        logging.error(f"Error writing to output file {output_file}: {e}")
+        logging.error(f"Error writing to output file {output_file}: {sanitize_error(str(e))}")
     
     return results
 

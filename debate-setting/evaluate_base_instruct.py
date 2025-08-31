@@ -37,7 +37,7 @@ def load_csv_data(file_path: str) -> List[Dict]:
                 data.append(row)
         return data
     except Exception as e:
-        logging.error(f"Error loading CSV file {file_path}: {e}")
+        logging.error(f"Error loading CSV file {file_path}: {sanitize_error(str(e))}")
         return []
 
 def process_responses(data: List[Dict]) -> Dict[str, Any]:
@@ -80,7 +80,7 @@ def process_responses(data: List[Dict]) -> Dict[str, Any]:
                 response1_results.append(0)
                 response2_results.append(0)
         except ValueError as e:
-            logging.error(f"Error processing row {i+1}: {e}")
+            logging.error(f"Error processing row {i+1}: {sanitize_error(str(e))}")
             response1_results.append(0)
             response2_results.append(0)
     
@@ -131,7 +131,7 @@ def save_results(results: Dict[str, Any], output_file: str) -> None:
             json.dump(results, f, indent=4)
         logging.info(f"Results written to {output_file}")
     except Exception as e:
-        logging.error(f"Error writing to output file {output_file}: {e}")
+        logging.error(f"Error writing to output file {output_file}: {sanitize_error(str(e))}")
 
 def main(args):
     # Set up logging

@@ -57,7 +57,7 @@ def load_csv_data(file_path: str) -> List[Dict]:
                 data.append(row)
         return data
     except Exception as e:
-        logging.error(f"Error loading CSV file {file_path}: {e}")
+        logging.error(f"Error loading CSV file {file_path}: {sanitize_error(str(e))}")
         return []
 
 def load_arguments(file_path: str) -> List[str]:
@@ -76,7 +76,7 @@ def load_arguments(file_path: str) -> List[str]:
             arguments = [line.strip() for line in f.readlines()]
         return arguments
     except Exception as e:
-        logging.error(f"Error loading arguments file {file_path}: {e}")
+        logging.error(f"Error loading arguments file {file_path}: {sanitize_error(str(e))}")
         return []
 
 def check_alignment(client, response: str, argument: str, api_key: str) -> bool:
@@ -124,7 +124,7 @@ def check_alignment(client, response: str, argument: str, api_key: str) -> bool:
             return False
         
     except Exception as e:
-        logging.error(f"Error calling GPT-4o: {e}")
+        logging.error(f"Error calling GPT-4o: {sanitize_error(str(e))}")
         # Default to not aligned in case of error
         return False
 
@@ -260,7 +260,7 @@ def process_prompt_file(csv_file: str, arguments: List[str], api_key: str, outpu
                 alignment_str = " ".join(str(a) for a in all_alignments[i])
                 f.write(f"Row {i+1}: ToF = {tof}, NoF = {nof}, Alignments = [{alignment_str}]\n")
     except Exception as e:
-        logging.error(f"Error writing to output file {output_file}: {e}")
+        logging.error(f"Error writing to output file {output_file}: {sanitize_error(str(e))}")
     
     # Write CSV output
     try:
@@ -279,7 +279,7 @@ def process_prompt_file(csv_file: str, arguments: List[str], api_key: str, outpu
                 
         logging.info(f"CSV results written to {csv_output_file}")
     except Exception as e:
-        logging.error(f"Error writing to CSV output file {csv_output_file}: {e}")
+        logging.error(f"Error writing to CSV output file {csv_output_file}: {sanitize_error(str(e))}")
     
     return tof_results, nof_results
 
@@ -369,7 +369,7 @@ def main(args):
                 json.dump(all_results, f, indent=4)
             logging.info(f"Summary written to {summary_file}")
         except Exception as e:
-            logging.error(f"Error writing summary file: {e}")
+            logging.error(f"Error writing summary file: {sanitize_error(str(e))}")
     
     # Print final summary
     if all_results:

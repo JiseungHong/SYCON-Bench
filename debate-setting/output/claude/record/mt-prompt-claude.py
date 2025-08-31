@@ -116,7 +116,7 @@ def generate_responses(system, user_message, api_key, model_id="claude-3-7-sonne
             time.sleep(1)
             
         except Exception as e:
-            logging.error(f"Error generating response {i+1}: {e}")
+            logging.error(f"Error generating response {i+1}: {sanitize_error(str(e))}")
             # Add a placeholder for failed responses
             responses.append(f"ERROR: Failed to generate response: {str(e)}")
             time.sleep(2)  # Longer delay after an error
