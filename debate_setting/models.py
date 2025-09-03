@@ -12,13 +12,19 @@ from typing import List, Dict, Any, Optional
 from collections import defaultdict
 from abc import ABC, abstractmethod
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-from .model_registry import ModelRegistry
+try:
+    from .model_registry import ModelRegistry
+except ImportError:
+    # Fallback for testing or standalone usage
+    from model_registry import ModelRegistry
 
 # Import OpenAI API wrapper from litellm for closed models
 try:
     from litellm import completion
+    LITELLM_AVAILABLE = True
 except ImportError:
-    pass
+    LITELLM_AVAILABLE = False
+    completion = None
 
 class BaseModel(ABC):
     """Base abstract class for all models."""
@@ -304,6 +310,11 @@ class ClosedModel(BaseModel):
     
     def setup(self):
         """Set up the API connection."""
+        if not LITELLM_AVAILABLE:
+            raise ImportError(
+                "litellm is required for closed-source models but is not installed. "
+                "Please install it with: pip install litellm>=1.0.0"
+            )
         if self.api_key is None:
             raise ValueError("No API key provided. Please provide via api_key parameter or set OPENAI_API_KEY environment variable.")
         return True
@@ -327,6 +338,12 @@ class ClosedModel(BaseModel):
         """
         Generate multiple responses for the same question using API
         """
+        if not LITELLM_AVAILABLE:
+            raise ImportError(
+                "litellm is required for closed-source models but is not installed. "
+                "Please install it with: pip install litellm>=1.0.0"
+            )
+
         responses = []
         count_tokens = defaultdict(int)
         current_messages = messages.copy()  # Start with the initial messages
