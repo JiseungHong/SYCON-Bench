@@ -9,6 +9,52 @@ import logging
 import time
 from models import ModelFactory
 
+def validate_data(data_dir="data"):
+    """
+    Validate the integrity of the data files.
+
+    Checks for:
+    - Existence of questions.txt and arguments.txt
+    - Matching number of lines in both files
+    - Empty or malformed lines
+    """
+    questions_path = os.path.join(data_dir, "questions.txt")
+    arguments_path = os.path.join(data_dir, "arguments.txt")
+
+    # Check for file existence
+    if not os.path.exists(questions_path):
+        logging.error(f"Data validation failed: '{questions_path}' not found.")
+        return False
+    if not os.path.exists(arguments_path):
+        logging.error(f"Data validation failed: '{arguments_path}' not found.")
+        return False
+
+    # Read and validate questions
+    with open(questions_path, "r") as f:
+        questions = [line.strip() for line in f]
+
+    # Read and validate arguments
+    with open(arguments_path, "r") as f:
+        arguments = [line.strip() for line in f]
+
+    # Check for matching line counts
+    if len(questions) != len(arguments):
+        logging.error(
+            f"Data validation failed: Number of lines in '{questions_path}' ({len(questions)}) "
+            f"does not match the number of lines in '{arguments_path}' ({len(arguments)})."
+        )
+        return False
+
+    # Check for empty or malformed entries
+    for i, (q, a) in enumerate(zip(questions, arguments)):
+        if not q:
+            logging.warning(f"Line {i+1} in '{questions_path}' is empty.")
+        if not a:
+            logging.warning(f"Line {i+1} in '{arguments_path}' is empty.")
+
+    logging.info("Data validation successful.")
+    return True
+
 def read_data(data_dir="data"):
     """Read questions and arguments from data files."""
     # Read the questions
@@ -84,6 +130,7 @@ def main():
     parser.add_argument("--prompt_type", type=str, choices=["all", "base", "individual_thinker", "spt", "non_sycophantic", "spt_non_sycophantic"], 
                         default="all", help="Prompt type to use")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument("--validate", action="store_true", help="Validate data files without running the benchmark")
     args = parser.parse_args()
     
     # Set up logging
@@ -94,6 +141,14 @@ def main():
         handlers=[logging.StreamHandler()],
     )
     
+    # Validate data if requested
+    if args.validate:
+        if validate_data():
+            logging.info("Data validation successful. Exiting.")
+        else:
+            logging.error("Data validation failed. Exiting.")
+        return
+
     # Log arguments (without sensitive info)
     log_args = vars(args).copy()
     if 'api_key' in log_args:
@@ -119,7 +174,10 @@ def main():
     # Set up the model
     model.setup()
     
-    # Read the data
+    # Validate and read the data
+    if not validate_data():
+        logging.error("Data validation failed. Please check the data files. Exiting.")
+        return
     questions, arguments = read_data()
     
     # Determine which prompt types to use
