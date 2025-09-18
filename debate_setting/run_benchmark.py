@@ -10,17 +10,61 @@ import time
 from models import ModelFactory
 
 def read_data(data_dir="data"):
-    """Read questions and arguments from data files."""
+    """Read questions and arguments from data files with comprehensive validation."""
+    questions_file = os.path.join(data_dir, "questions.txt")
+    arguments_file = os.path.join(data_dir, "arguments.txt")
+
+    # Check if files exist
+    if not os.path.exists(questions_file):
+        raise FileNotFoundError(f"Questions file not found: {questions_file}")
+
+    if not os.path.exists(arguments_file):
+        raise FileNotFoundError(f"Arguments file not found: {arguments_file}")
+
+    # Check if files are readable
+    if not os.access(questions_file, os.R_OK):
+        raise PermissionError(f"Cannot read questions file: {questions_file}")
+
+    if not os.access(arguments_file, os.R_OK):
+        raise PermissionError(f"Cannot read arguments file: {arguments_file}")
+
     # Read the questions
-    with open(f"{data_dir}/questions.txt", "r") as f:
-        questions = [line.strip() for line in f if line.strip()]
+    try:
+        with open(questions_file, "r", encoding="utf-8") as f:
+            questions = [line.strip() for line in f if line.strip()]
+    except Exception as e:
+        raise IOError(f"Error reading questions file {questions_file}: {e}")
     
     # Read the arguments
-    with open(f"{data_dir}/arguments.txt", "r") as f:
-        arguments = [line.strip() for line in f if line.strip()]
+    try:
+        with open(arguments_file, "r", encoding="utf-8") as f:
+            arguments = [line.strip() for line in f if line.strip()]
+    except Exception as e:
+        raise IOError(f"Error reading arguments file {arguments_file}: {e}")
+
+    # Validate that we have the same number of questions and arguments
+    if len(questions) != len(arguments):
+        raise ValueError(
+            f"Mismatch between questions and arguments: "
+            f"found {len(questions)} questions but {len(arguments)} arguments. "
+            f"Files {questions_file} and {arguments_file} must have the same number of non-empty lines."
+        )
     
-    assert len(questions) == len(arguments), "Number of questions must match number of arguments"
     return questions, arguments
+
+
+def validate_data(data_dir="data"):
+    """Validate data files without running the benchmark."""
+    try:
+        questions, arguments = read_data(data_dir)
+        print(f"✓ Data validation successful!")
+        print(f"  - Found {len(questions)} questions and {len(arguments)} arguments")
+        print(f"  - All files exist and are readable")
+        print(f"  - Data format is consistent")
+        return True
+    except Exception as e:
+        print(f"✗ Data validation failed: {e}")
+        return False
 
 def run_benchmark(model, questions, arguments, batch_size=4, num_responses=5, output_dir=None, prompt_types=None):
     """
@@ -84,6 +128,7 @@ def main():
     parser.add_argument("--prompt_type", type=str, choices=["all", "base", "individual_thinker", "spt", "non_sycophantic", "spt_non_sycophantic"], 
                         default="all", help="Prompt type to use")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument("--validate", action="store_true", help="Validate data files without running the benchmark")
     args = parser.parse_args()
     
     # Set up logging
@@ -107,6 +152,11 @@ def main():
     output_dir = args.output_dir if args.output_dir else f"output/{model_id}"
     os.makedirs(output_dir, exist_ok=True)
     
+    # Handle validation mode
+    if args.validate:
+        success = validate_data("data")
+        return 0 if success else 1
+
     # Log information about the run
     logging.info(f"Processing model: {args.model_name}")
     logging.info(f"Output directory: {output_dir}")
@@ -120,7 +170,7 @@ def main():
     model.setup()
     
     # Read the data
-    questions, arguments = read_data()
+    questions, arguments = read_data("data")
     
     # Determine which prompt types to use
     if args.prompt_type == "all":
