@@ -18,7 +18,9 @@ from .model_registry import ModelRegistry
 try:
     from litellm import completion
 except ImportError:
-    pass
+    raise ImportError(
+        "litellm is not installed. Please install it with `pip install litellm`"
+    )
 
 class BaseModel(ABC):
     """Base abstract class for all models."""
@@ -306,6 +308,14 @@ class ClosedModel(BaseModel):
         """Set up the API connection."""
         if self.api_key is None:
             raise ValueError("No API key provided. Please provide via api_key parameter or set OPENAI_API_KEY environment variable.")
+
+        # Check if litellm is installed
+        try:
+            import litellm
+        except ImportError:
+            raise ImportError(
+                "litellm is not installed. Please install it to use closed models: `pip install litellm`"
+            )
         return True
     
     def estimate_cost(self, count: dict) -> float:

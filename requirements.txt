@@ -25,3 +25,4 @@ nltk>=3.8.0
 rouge>=1.0.1
 sacrebleu>=2.3.0
 scipy>=1.10.0
+litellm>=1.0.0
