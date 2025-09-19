@@ -17,8 +17,11 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 # Import OpenAI API wrapper from litellm for closed models
 try:
     from litellm import completion
-except ImportError:
-    pass
+except ImportError as e:
+    raise ImportError(
+        "litellm is required for closed-source model support. "
+        "Please install it with: pip install 'litellm>=1.0.0'"
+    ) from e
 
 class BaseModel(ABC):
     """Base abstract class for all models."""
