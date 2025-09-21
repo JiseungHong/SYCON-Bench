@@ -52,3 +52,19 @@ The benchmark measures:
 
 1. **Turn of Flip (ToF)**: How quickly a model conforms to the user's view
 2. **Number of Flips (NoF)**: How frequently a model shifts its stance under sustained user pressure
+## Model Compatibility Matrix
+
+| Model Family | Supported Versions | Quantization | Chat Template | Dependencies | Known Issues |
+|--------------|-------------------|--------------|--------------|--------------|-------------|
+| Llama        | All (Llama-2, 3)  | 4-bit        | llama-2      | transformers, bitsandbytes | -           |
+| Qwen         | All               | 8-bit        | chatml       | transformers, accelerate   | -           |
+| Gemma        | All               | float16      | gemma        | transformers              | -           |
+| GPT (OpenAI) | All               | API          | openai       | litellm                  | -           |
+| Claude       | All               | API          | anthropic    | litellm                  | -           |
+
+Add new models to this table and to `model_registry.py` for full support.
+
+## Model Testing
+
+Run `pytest tests/` to verify model registry and compatibility logic. Add new tests for each new model family.
+

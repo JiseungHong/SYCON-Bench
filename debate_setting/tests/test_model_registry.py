@@ -1,7 +1,11 @@
 
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 
 import pytest
-from debate_setting.model_registry import ModelRegistry, ModelConfig
+from model_registry import ModelRegistry, ModelConfig
 
 def test_get_model_family():
     # Test known model families
@@ -25,4 +29,18 @@ def test_supported_families():
     supported = ModelRegistry.get_supported_families()
     assert "llama" in supported
     assert "qwen" in supported
+
+
+def test_gemma_config():
+    gemma_config = ModelRegistry.get_quantization_config("gemma")
+    assert gemma_config == {"torch_dtype": "float16"}
+    assert ModelRegistry.get_model_family("google/gemma-3-12b-it") == "gemma"
+
+def test_gpt_claude_config():
+    gpt_config = ModelRegistry.get_quantization_config("gpt")
+    claude_config = ModelRegistry.get_quantization_config("claude")
+    assert gpt_config == {}
+    assert claude_config == {}
+    assert ModelRegistry.get_model_family("openai/gpt-4o") == "gpt"
+    assert ModelRegistry.get_model_family("anthropic/claude-3-opus") == "claude"
 

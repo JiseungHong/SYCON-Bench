@@ -23,6 +23,24 @@ class ModelRegistry:
             chat_template="chatml",
             dependencies=["transformers", "accelerate"]
         ),
+        "gemma": ModelConfig(
+            family="Gemma",
+            quantization={"torch_dtype": "float16"},
+            chat_template="gemma",
+            dependencies=["transformers"]
+        ),
+        "gpt": ModelConfig(
+            family="GPT",
+            quantization={},
+            chat_template="openai",
+            dependencies=["litellm"]
+        ),
+        "claude": ModelConfig(
+            family="Claude",
+            quantization={},
+            chat_template="anthropic",
+            dependencies=["litellm"]
+        ),
         # Add other model families here
     }
 
