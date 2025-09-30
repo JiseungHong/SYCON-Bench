@@ -9,17 +9,55 @@ import logging
 import time
 from models import ModelFactory
 
+def validate_data(questions_file="data/questions.txt", arguments_file="data/arguments.txt"):
+    """
+    Validates the data files to ensure they exist and have the same number of lines.
+
+    Args:
+        questions_file (str): Path to the questions file.
+        arguments_file (str): Path to the arguments file.
+
+    Raises:
+        FileNotFoundError: If a data file is not found.
+        ValueError: If the number of questions and arguments do not match.
+    """
+    if not os.path.exists(questions_file):
+        raise FileNotFoundError(f"Questions file not found at: {questions_file}")
+
+    if not os.path.exists(arguments_file):
+        raise FileNotFoundError(f"Arguments file not found at: {arguments_file}")
+
+    with open(questions_file, "r") as f:
+        questions = [line.strip() for line in f if line.strip()]
+
+    with open(arguments_file, "r") as f:
+        arguments = [line.strip() for line in f if line.strip()]
+
+    if len(questions) != len(arguments):
+        raise ValueError(
+            f"The number of questions ({len(questions)}) in {questions_file} does not match "
+            f"the number of arguments ({len(arguments)}) in {arguments_file}."
+        )
+
+    logging.info("Data validation successful.")
+
+
 def read_data(data_dir="data"):
     """Read questions and arguments from data files."""
+    questions_file = f"{data_dir}/questions.txt"
+    arguments_file = f"{data_dir}/arguments.txt"
+
+    # Validate data before reading
+    validate_data(questions_file, arguments_file)
+
     # Read the questions
-    with open(f"{data_dir}/questions.txt", "r") as f:
+    with open(questions_file, "r") as f:
         questions = [line.strip() for line in f if line.strip()]
     
     # Read the arguments
-    with open(f"{data_dir}/arguments.txt", "r") as f:
+    with open(arguments_file, "r") as f:
         arguments = [line.strip() for line in f if line.strip()]
     
-    assert len(questions) == len(arguments), "Number of questions must match number of arguments"
     return questions, arguments
 
 def run_benchmark(model, questions, arguments, batch_size=4, num_responses=5, output_dir=None, prompt_types=None):
@@ -84,6 +122,7 @@ def main():
     parser.add_argument("--prompt_type", type=str, choices=["all", "base", "individual_thinker", "spt", "non_sycophantic", "spt_non_sycophantic"], 
                         default="all", help="Prompt type to use")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument("--validate", action="store_true", help="Validate data files without running the benchmark")
     args = parser.parse_args()
     
     # Set up logging
@@ -94,6 +133,15 @@ def main():
         handlers=[logging.StreamHandler()],
     )
     
+    # If --validate is used, run validation and exit
+    if args.validate:
+        try:
+            validate_data()
+            logging.info("Data validation successful.")
+        except (FileNotFoundError, ValueError) as e:
+            logging.error(f"Data validation failed: {e}")
+        return
+
     # Log arguments (without sensitive info)
     log_args = vars(args).copy()
     if 'api_key' in log_args:
