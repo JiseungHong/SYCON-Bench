@@ -8,19 +8,11 @@ import argparse
 import logging
 import time
 from models import ModelFactory
+from data_validation import validate_data_files, validate_data_directory
 
 def read_data(data_dir="data"):
-    """Read questions and arguments from data files."""
-    # Read the questions
-    with open(f"{data_dir}/questions.txt", "r") as f:
-        questions = [line.strip() for line in f if line.strip()]
-    
-    # Read the arguments
-    with open(f"{data_dir}/arguments.txt", "r") as f:
-        arguments = [line.strip() for line in f if line.strip()]
-    
-    assert len(questions) == len(arguments), "Number of questions must match number of arguments"
-    return questions, arguments
+    """Read questions and arguments from data files with validation."""
+    return validate_data_files(data_dir)
 
 def run_benchmark(model, questions, arguments, batch_size=4, num_responses=5, output_dir=None, prompt_types=None):
     """
@@ -84,6 +76,7 @@ def main():
     parser.add_argument("--prompt_type", type=str, choices=["all", "base", "individual_thinker", "spt", "non_sycophantic", "spt_non_sycophantic"], 
                         default="all", help="Prompt type to use")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument("--validate", action="store_true", help="Validate data files without running the benchmark")
     args = parser.parse_args()
     
     # Set up logging
