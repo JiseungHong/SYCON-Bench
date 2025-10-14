@@ -109,6 +109,18 @@ class OpenModel(BaseModel):
         self.model_name = model_name
         self.model = None
         self.tokenizer = None
+        self.model_properties = {
+            "gemma": {
+                "tokenizer_kwargs": {"trust_remote_code": True},
+                "model_kwargs": {"trust_remote_code": True, "torch_dtype": torch.float16},
+            },
+            "llama": {
+                "tokenizer_kwargs": {"padding_side": "right", "add_eos_token": True},
+            },
+            "mistral": {
+                "tokenizer_kwargs": {"padding_side": "right", "add_eos_token": True},
+            }
+        }
     
     def setup(self):
         """
@@ -116,45 +128,28 @@ class OpenModel(BaseModel):
         """
         print(f"Loading model: {self.model_name}")
         
-        # Set up quantization parameters based on model size
-        # Get quantization config from model registry
+        # Get model family from the registry
         model_family = ModelRegistry.get_model_family(self.model_name)
-        quantization_config = ModelRegistry.get_quantization_config(model_family)
         
-        # Fallback to default if no registry entry
-        if not quantization_config:
-            quantization_config = {"torch_dtype": torch.float16}
-        
-        # Load tokenizer with specific configurations for certain models
-        tokenizer_kwargs = {}
-        
-        # Load model with appropriate quantization
-        model_kwargs = {"device_map": "auto"}
-        
-        # Special handling for specific model families
-        model_name_lower = self.model_name.lower()
-        
-        # Handle Gemma models
-        if "gemma" in model_name_lower:
-            print("Using Gemma-specific configurations")
-            
-            # Load tokenizer with trust_remote_code for Gemma
-            tokenizer_kwargs["trust_remote_code"] = True
-            model_kwargs["trust_remote_code"] = True
-            model_kwargs["torch_dtype"] = torch.float16
-        
-        # Llama models need padding token configured
-        elif any(name in model_name_lower for name in ["llama", "mistral"]):
-            tokenizer_kwargs["padding_side"] = "right"
-            tokenizer_kwargs["add_eos_token"] = True
+        # Get properties from the model_properties dictionary
+        properties = self.model_properties.get(model_family, {})
+        tokenizer_kwargs = properties.get("tokenizer_kwargs", {})
+        model_kwargs = properties.get("model_kwargs", {"device_map": "auto"})
         
         # Load tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, **tokenizer_kwargs)
         
         # Handle special tokens for models that need them
-        if any(name in model_name_lower for name in ["llama", "mistral"]) and self.tokenizer.pad_token is None:
+        if model_family in ["llama", "mistral"] and self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
+
+        # Get quantization config from model registry
+        quantization_config = ModelRegistry.get_quantization_config(model_family)
         
+        # Fallback to default if no registry entry
+        if not quantization_config:
+            quantization_config = {"torch_dtype": torch.float16}
+
         if "4bit" in quantization_config:
             model_kwargs.update({
                 "load_in_4bit": True,
@@ -170,7 +165,7 @@ class OpenModel(BaseModel):
             })
         
         # Add trust_remote_code for models that require it
-        if any(name in model_name_lower for name in ["mpt", "falcon", "starcoder", "rwkv"]):
+        if model_family in ["mpt", "falcon", "starcoder", "rwkv"]:
             model_kwargs["trust_remote_code"] = True
         
         # Load the model
