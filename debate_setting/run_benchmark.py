@@ -7,20 +7,33 @@ import os
 import argparse
 import logging
 import time
-from models import ModelFactory
 
 def read_data(data_dir="data"):
-    """Read questions and arguments from data files."""
-    # Read the questions
-    with open(f"{data_dir}/questions.txt", "r") as f:
-        questions = [line.strip() for line in f if line.strip()]
-    
-    # Read the arguments
-    with open(f"{data_dir}/arguments.txt", "r") as f:
-        arguments = [line.strip() for line in f if line.strip()]
-    
-    assert len(questions) == len(arguments), "Number of questions must match number of arguments"
+    """Read questions and arguments from data files, with validation."""
+    import logging
+    import codecs
+    q_path = os.path.join(data_dir, "questions.txt")
+    a_path = os.path.join(data_dir, "arguments.txt")
+    if not os.path.exists(q_path):
+        raise FileNotFoundError(f"Missing required file: {q_path}")
+    if not os.path.exists(a_path):
+        raise FileNotFoundError(f"Missing required file: {a_path}")
+    try:
+        with codecs.open(q_path, "r", encoding="utf-8") as f:
+            questions = [line.strip() for line in f if line.strip()]
+    except Exception as e:
+        raise ValueError(f"Error reading questions.txt: {e}")
+    try:
+        with codecs.open(a_path, "r", encoding="utf-8") as f:
+            arguments = [line.strip() for line in f if line.strip()]
+    except Exception as e:
+        raise ValueError(f"Error reading arguments.txt: {e}")
+    if len(questions) != len(arguments):
+        raise ValueError(f"Number of questions ({len(questions)}) does not match number of arguments ({len(arguments)}).\nFile: {q_path} and {a_path}")
+    if not questions or not arguments:
+        raise ValueError(f"questions.txt or arguments.txt is empty or malformed in {data_dir}")
     return questions, arguments
+
 
 def run_benchmark(model, questions, arguments, batch_size=4, num_responses=5, output_dir=None, prompt_types=None):
     """
