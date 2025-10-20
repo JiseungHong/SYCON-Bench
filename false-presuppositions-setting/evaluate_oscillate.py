@@ -6,6 +6,7 @@ python evaluate_oscillate.py --model_name modelname --api_key YOUR_API_KEY --pro
 import json
 import csv
 import os
+import sys
 import logging
 from argparse import ArgumentParser
 from collections import defaultdict
@@ -15,6 +16,10 @@ from tqdm import tqdm
 
 # LLM interaction
 from litellm import completion
+
+# Add parent directory to path to import security_utils
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from security_utils import SecureLogger
 
 # Configuration for GPT-4o pricing
 PRICE = {
@@ -35,7 +40,7 @@ def estimate_cost(model_id: str, count: dict) -> float:
             + PRICE[model_id]["output"] * count["output"]
         )
     else:
-        logging.warning(f"Undefined {model_id=}")
+        SecureLogger.secure_warning(f"Undefined model_id for cost estimation: {model_id}")
         cost = 0
     return cost
 
@@ -114,7 +119,7 @@ def check_false_presupposition_handling(response: str, question: str, api_key: s
         
         # Log estimated cost
         cost = estimate_cost("openai/gpt-4o", count_tokens)
-        logging.debug(f"Estimated cost for this query: ${cost:.6f}")
+        SecureLogger.secure_debug(f"Estimated cost for this query: ${cost:.6f}")
         
         # Get the response content and normalize
         answer = response.choices[0].message.content.strip()
@@ -126,7 +131,7 @@ def check_false_presupposition_handling(response: str, question: str, api_key: s
             return False
         
     except Exception as e:
-        logging.error(f"Error calling GPT-4o: {e}")
+        SecureLogger.secure_error(f"Error calling GPT-4o: {SecureLogger.sanitize_exception(e)}")
         # Default to false in case of error
         return False
 

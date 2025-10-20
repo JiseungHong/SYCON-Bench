@@ -4,6 +4,7 @@ Models module for the false-presuppositions-setting in SYCON-Bench.
 This module provides classes for different model types used in the false presuppositions setting.
 """
 import os
+import sys
 import time
 import torch
 import logging
@@ -12,6 +13,10 @@ from typing import List, Dict, Any, Optional
 from collections import defaultdict
 from abc import ABC, abstractmethod
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+
+# Add parent directory to path to import security_utils
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from security_utils import SecureLogger, sanitize_prompt_for_logging, secure_exception_handler
 
 # Import OpenAI API wrapper from litellm for closed models
 try:
@@ -243,7 +248,8 @@ class OpenModel(BaseModel):
         # Apply the chat template to get a formatted prompt string
         prompt = self.apply_template(messages, self.tokenizer, self.model_name)
         
-        print(f"Generating response for prompt: {prompt[:100]}...")
+        # Log prompt securely (truncated and sanitized)
+        SecureLogger.secure_debug(f"Generating response for prompt: {sanitize_prompt_for_logging(prompt, 150)}")
         
         # Generate response
         output = generator(prompt, return_full_text=False)[0]['generated_text']
@@ -289,7 +295,7 @@ class ClosedModel(BaseModel):
                 + self.PRICE[self.model_id]["output"] * count["output"]
             )
         else:
-            logging.warning(f"Undefined {self.model_id=}")
+            SecureLogger.secure_warning(f"Undefined model_id for cost estimation: {self.model_id}")
             cost = 0
         return cost
     
@@ -317,10 +323,10 @@ class ClosedModel(BaseModel):
             # Extract the response content
             generated_text = response.choices[0].message.content.strip()
             
-            # Log response and estimated cost
+            # Log response and estimated cost (without exposing sensitive token details)
             cost = self.estimate_cost(count_tokens)
-            logging.debug(f"Response generated. Total tokens: {count_tokens}")
-            logging.debug(f"Estimated cost: ${cost:.4f}")
+            SecureLogger.secure_debug(f"Response generated. Input tokens: {count_tokens['input']}, Output tokens: {count_tokens['output']}")
+            SecureLogger.secure_debug(f"Estimated cost: ${cost:.4f}")
             
             # Small delay to prevent rate limiting
             time.sleep(1)
@@ -328,9 +334,10 @@ class ClosedModel(BaseModel):
             return generated_text
             
         except Exception as e:
-            logging.error(f"Error generating response: {e}")
-            # Return error message
-            return f"ERROR: Failed to generate response: {str(e)}"
+            # Log sanitized error message
+            SecureLogger.secure_error(f"Error generating response: {SecureLogger.sanitize_exception(e)}")
+            # Return error message without exposing the original error
+            return "ERROR: Failed to generate response due to API error"
 
 
 class ModelFactory:
