@@ -7,20 +7,69 @@ import os
 import argparse
 import logging
 import time
-from models import ModelFactory
+import sys
+from data_validation import DataValidator, DataValidationError
 
-def read_data(data_dir="data"):
-    """Read questions and arguments from data files."""
-    # Read the questions
-    with open(f"{data_dir}/questions.txt", "r") as f:
-        questions = [line.strip() for line in f if line.strip()]
-    
-    # Read the arguments
-    with open(f"{data_dir}/arguments.txt", "r") as f:
-        arguments = [line.strip() for line in f if line.strip()]
-    
-    assert len(questions) == len(arguments), "Number of questions must match number of arguments"
-    return questions, arguments
+def read_data(data_dir="data", validate=True):
+    """
+    Read questions and arguments from data files with optional validation.
+
+    Args:
+        data_dir: Directory containing the data files
+        validate: Whether to perform comprehensive validation
+
+    Returns:
+        Tuple of (questions, arguments) lists
+
+    Raises:
+        DataValidationError: If validation fails
+        FileNotFoundError: If files don't exist (when validation is disabled)
+    """
+    if validate:
+        # Use comprehensive validation
+        validator = DataValidator(data_dir)
+        try:
+            questions, arguments = validator.validate_debate_data()
+            return questions, arguments
+        except DataValidationError as e:
+            logging.error(f"Data validation failed: {e}")
+            sys.exit(1)
+    else:
+        # Legacy behavior with minimal validation
+        questions_file = f"{data_dir}/questions.txt"
+        arguments_file = f"{data_dir}/arguments.txt"
+
+        try:
+            with open(questions_file, "r", encoding='utf-8') as f:
+                questions = [line.strip() for line in f if line.strip()]
+        except FileNotFoundError:
+            logging.error(f"Questions file not found: {questions_file}")
+            sys.exit(1)
+        except Exception as e:
+            logging.error(f"Error reading questions file {questions_file}: {e}")
+            sys.exit(1)
+
+        try:
+            with open(arguments_file, "r", encoding='utf-8') as f:
+                arguments = [line.strip() for line in f if line.strip()]
+        except FileNotFoundError:
+            logging.error(f"Arguments file not found: {arguments_file}")
+            sys.exit(1)
+        except Exception as e:
+            logging.error(f"Error reading arguments file {arguments_file}: {e}")
+            sys.exit(1)
+
+        if len(questions) != len(arguments):
+            logging.error(
+                f"Data integrity error: Number of questions ({len(questions)}) "
+                f"does not match number of arguments ({len(arguments)}).\n"
+                f"Questions file: {questions_file} ({len(questions)} lines)\n"
+                f"Arguments file: {arguments_file} ({len(arguments)} lines)\n"
+                f"Please ensure both files have the same number of non-empty lines."
+            )
+            sys.exit(1)
+
+        return questions, arguments
 
 def run_benchmark(model, questions, arguments, batch_size=4, num_responses=5, output_dir=None, prompt_types=None):
     """
@@ -84,6 +133,8 @@ def main():
     parser.add_argument("--prompt_type", type=str, choices=["all", "base", "individual_thinker", "spt", "non_sycophantic", "spt_non_sycophantic"], 
                         default="all", help="Prompt type to use")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument("--validate", action="store_true", help="Only validate data files without running the benchmark")
+    parser.add_argument("--no-validate", action="store_true", help="Skip comprehensive data validation (use legacy validation)")
     args = parser.parse_args()
     
     # Set up logging
@@ -94,12 +145,28 @@ def main():
         handlers=[logging.StreamHandler()],
     )
     
+    # Check for conflicting arguments
+    if args.validate and args.no_validate:
+        logging.error("Cannot use both --validate and --no-validate flags simultaneously")
+        sys.exit(1)
+
     # Log arguments (without sensitive info)
     log_args = vars(args).copy()
     if 'api_key' in log_args:
         log_args['api_key'] = '***' if log_args['api_key'] else None
     logging.info(f"Arguments: {log_args}")
     
+    # Determine validation mode
+    use_validation = not args.no_validate
+
+    # Read and validate the data
+    questions, arguments = read_data(validate=use_validation)
+
+    # If only validation was requested, exit after successful validation
+    if args.validate:
+        logging.info("Data validation completed successfully. Exiting without running benchmark.")
+        return
+
     # Create a shorter model identifier for directory names
     model_id = args.model_name.split("/")[-1]
     
@@ -113,14 +180,14 @@ def main():
     logging.info(f"Batch size: {args.batch_size}")
     logging.info(f"Number of responses per question: {args.num_responses}")
     
+    # Import ModelFactory only when needed (to avoid torch dependency for validation-only runs)
+    from models import ModelFactory
+
     # Create the model
     model = ModelFactory.create_model(args.model_name, api_key=args.api_key, base_url=args.base_url)
     
     # Set up the model
     model.setup()
-    
-    # Read the data
-    questions, arguments = read_data()
     
     # Determine which prompt types to use
     if args.prompt_type == "all":

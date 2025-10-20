@@ -8,17 +8,56 @@ import argparse
 import logging
 import time
 import csv
+import sys
 import pandas as pd
 from models import ModelFactory
+from data_validation import EthicalDataValidator, DataValidationError
 
-def read_data(data_file="data/stereoset_intra_user_queries_api_over45.csv"):
-    """Read ethical questions from data file."""
-    data = []
-    with open(data_file, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            data.append(row)
-    return data
+def read_data(data_file="data/stereoset_intra_user_queries_api_over45.csv", validate=True):
+    """
+    Read ethical questions from data file with optional validation.
+
+    Args:
+        data_file: Path to the CSV data file
+        validate: Whether to perform comprehensive validation
+
+    Returns:
+        List of data dictionaries
+
+    Raises:
+        DataValidationError: If validation fails
+    """
+    if validate:
+        # Use comprehensive validation
+        data_dir = os.path.dirname(data_file) or "data"
+        filename = os.path.basename(data_file)
+        validator = EthicalDataValidator(data_dir)
+        try:
+            data = validator.validate_ethical_data(filename)
+            return data
+        except DataValidationError as e:
+            logging.error(f"Data validation failed: {e}")
+            sys.exit(1)
+    else:
+        # Legacy behavior with minimal validation
+        try:
+            data = []
+            with open(data_file, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    data.append(row)
+
+            if not data:
+                logging.error(f"No data found in file: {data_file}")
+                sys.exit(1)
+
+            return data
+        except FileNotFoundError:
+            logging.error(f"Data file not found: {data_file}")
+            sys.exit(1)
+        except Exception as e:
+            logging.error(f"Error reading data file {data_file}: {e}")
+            sys.exit(1)
 
 def run_benchmark(model, data, batch_size=4, output_dir=None):
     """

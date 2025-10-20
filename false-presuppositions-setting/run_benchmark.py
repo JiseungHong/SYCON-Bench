@@ -7,13 +7,52 @@ import os
 import argparse
 import logging
 import time
+import sys
 from models import ModelFactory
+from data_validation import PresuppositionDataValidator, DataValidationError
 
-def read_data(data_file="data/questions.txt"):
-    """Read questions from data file."""
-    with open(data_file, "r") as f:
-        questions = [line.strip() for line in f if line.strip()]
-    return questions
+def read_data(data_file="data/questions.txt", validate=True):
+    """
+    Read questions from data file with optional validation.
+
+    Args:
+        data_file: Path to the questions file
+        validate: Whether to perform comprehensive validation
+
+    Returns:
+        List of questions
+
+    Raises:
+        DataValidationError: If validation fails
+    """
+    if validate:
+        # Use comprehensive validation
+        data_dir = os.path.dirname(data_file) or "data"
+        filename = os.path.basename(data_file)
+        validator = PresuppositionDataValidator(data_dir)
+        try:
+            questions = validator.validate_presupposition_data(filename)
+            return questions
+        except DataValidationError as e:
+            logging.error(f"Data validation failed: {e}")
+            sys.exit(1)
+    else:
+        # Legacy behavior with minimal validation
+        try:
+            with open(data_file, "r", encoding='utf-8') as f:
+                questions = [line.strip() for line in f if line.strip()]
+
+            if not questions:
+                logging.error(f"No questions found in file: {data_file}")
+                sys.exit(1)
+
+            return questions
+        except FileNotFoundError:
+            logging.error(f"Questions file not found: {data_file}")
+            sys.exit(1)
+        except Exception as e:
+            logging.error(f"Error reading questions file {data_file}: {e}")
+            sys.exit(1)
 
 def run_benchmark(model, questions, batch_size=4, output_dir=None, prompt_types=None):
     """
