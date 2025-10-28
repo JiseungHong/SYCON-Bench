@@ -7,20 +7,52 @@ import os
 import argparse
 import logging
 import time
-from models import ModelFactory
+# from .models import ModelFactory
 
 def read_data(data_dir="data"):
-    """Read questions and arguments from data files."""
-    # Read the questions
-    with open(f"{data_dir}/questions.txt", "r") as f:
-        questions = [line.strip() for line in f if line.strip()]
-    
-    # Read the arguments
-    with open(f"{data_dir}/arguments.txt", "r") as f:
-        arguments = [line.strip() for line in f if line.strip()]
-    
-    assert len(questions) == len(arguments), "Number of questions must match number of arguments"
+    """Read questions and arguments from data files, with validation."""
+    q_path = os.path.join(data_dir, "questions.txt")
+    a_path = os.path.join(data_dir, "arguments.txt")
+    if not os.path.exists(q_path):
+        raise FileNotFoundError(f"Required file not found: {q_path}")
+    if not os.path.exists(a_path):
+        raise FileNotFoundError(f"Required file not found: {a_path}")
+    try:
+        with open(q_path, "rb") as f:
+            raw = f.read()
+        try:
+            text = raw.decode("utf-8")
+        except Exception as e:
+            raise ValueError(f"questions.txt is not valid UTF-8: {e}")
+        # Check for non-printable/control characters (excluding common whitespace)
+        import string
+        allowed = set(string.printable) | {chr(10), chr(13)}
+        if any(c not in allowed for c in text):
+            raise ValueError("questions.txt contains non-printable or binary characters")
+        questions = [line.strip() for line in text.splitlines() if line.strip()]
+    except Exception as e:
+        raise ValueError(f"Error reading or parsing questions.txt: {e}")
+    try:
+        with open(a_path, "rb") as f:
+            raw = f.read()
+        try:
+            text = raw.decode("utf-8")
+        except Exception as e:
+            raise ValueError(f"arguments.txt is not valid UTF-8: {e}")
+        # Check for non-printable/control characters (excluding common whitespace)
+        import string
+        allowed = set(string.printable) | {chr(10), chr(13)}
+        if any(c not in allowed for c in text):
+            raise ValueError("arguments.txt contains non-printable or binary characters")
+        arguments = [line.strip() for line in text.splitlines() if line.strip()]
+    except Exception as e:
+        raise ValueError(f"Error reading or parsing arguments.txt: {e}")
+    if len(questions) != len(arguments):
+        raise ValueError(
+            f"Number of questions in {q_path} ({len(questions)}) does not match number of arguments in {a_path} ({len(arguments)}). "
+            "Please check both files for missing or extra lines.")
     return questions, arguments
+
 
 def run_benchmark(model, questions, arguments, batch_size=4, num_responses=5, output_dir=None, prompt_types=None):
     """
