@@ -10,16 +10,37 @@ import time
 from models import ModelFactory
 
 def read_data(data_dir="data"):
-    """Read questions and arguments from data files."""
-    # Read the questions
-    with open(f"{data_dir}/questions.txt", "r") as f:
+    """Read questions and arguments from data files, with validation."""
+    questions_file = os.path.join(data_dir, "questions.txt")
+    arguments_file = os.path.join(data_dir, "arguments.txt")
+
+    # Validate file existence
+    if not os.path.exists(questions_file):
+        raise FileNotFoundError(f"Questions file not found at: {questions_file}")
+    if not os.path.exists(arguments_file):
+        raise FileNotFoundError(f"Arguments file not found at: {arguments_file}")
+
+    # Read and validate questions
+    with open(questions_file, "r") as f:
         questions = [line.strip() for line in f if line.strip()]
-    
-    # Read the arguments
-    with open(f"{data_dir}/arguments.txt", "r") as f:
+    if not questions:
+        raise ValueError(f"No questions found in {questions_file}. The file is empty or contains only whitespace.")
+
+    # Read and validate arguments
+    with open(arguments_file, "r") as f:
         arguments = [line.strip() for line in f if line.strip()]
-    
-    assert len(questions) == len(arguments), "Number of questions must match number of arguments"
+    if not arguments:
+        raise ValueError(f"No arguments found in {arguments_file}. The file is empty or contains only whitespace.")
+
+    # Validate that the number of questions matches the number of arguments
+    if len(questions) != len(arguments):
+        raise ValueError(
+            f"The number of questions ({len(questions)}) does not match the number of arguments ({len(arguments)}).\n"
+            f"Please ensure both files have the same number of non-empty lines.\n"
+            f"  - Questions file: {questions_file}\n"
+            f"  - Arguments file: {arguments_file}"
+        )
+
     return questions, arguments
 
 def run_benchmark(model, questions, arguments, batch_size=4, num_responses=5, output_dir=None, prompt_types=None):
@@ -75,7 +96,7 @@ def run_benchmark(model, questions, arguments, batch_size=4, num_responses=5, ou
 
 def main():
     parser = argparse.ArgumentParser(description="Run SYCON-Bench debate setting benchmark")
-    parser.add_argument("model_name", type=str, help="Model name or identifier")
+    parser.add_argument("model_name", type=str, nargs='?', default=None, help="Model name or identifier (optional)")
     parser.add_argument("--api_key", type=str, help="API key for closed models")
     parser.add_argument("--base_url", type=str, help="Base URL for API (for closed models)")
     parser.add_argument("--batch_size", type=int, default=4, help="Number of questions to process in each batch")
@@ -84,6 +105,7 @@ def main():
     parser.add_argument("--prompt_type", type=str, choices=["all", "base", "individual_thinker", "spt", "non_sycophantic", "spt_non_sycophantic"], 
                         default="all", help="Prompt type to use")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument("--validate", action="store_true", help="Validate data files without running the benchmark")
     args = parser.parse_args()
     
     # Set up logging
@@ -94,6 +116,22 @@ def main():
         handlers=[logging.StreamHandler()],
     )
     
+    # If --validate is used, just validate the data and exit
+    if args.validate:
+        try:
+            questions, arguments = read_data()
+            logging.info("Data validation successful.")
+            logging.info(f"Found {len(questions)} questions and {len(arguments)} arguments.")
+            print("Data validation successful.")
+        except (FileNotFoundError, ValueError) as e:
+            logging.error(f"Data validation failed: {e}")
+            print(f"Data validation failed: {e}")
+        return
+
+    # Ensure model_name is provided if not validating
+    if not args.model_name:
+        parser.error("the following arguments are required: model_name")
+
     # Log arguments (without sensitive info)
     log_args = vars(args).copy()
     if 'api_key' in log_args:
@@ -120,7 +158,11 @@ def main():
     model.setup()
     
     # Read the data
-    questions, arguments = read_data()
+    try:
+        questions, arguments = read_data()
+    except (FileNotFoundError, ValueError) as e:
+        logging.error(f"Error reading data: {e}")
+        return
     
     # Determine which prompt types to use
     if args.prompt_type == "all":
@@ -143,15 +185,19 @@ def main():
         prompt_types = [(args.prompt_type, prompt_map[args.prompt_type])]
     
     # Run the benchmark
-    run_benchmark(
-        model=model,
-        questions=questions,
-        arguments=arguments,
-        batch_size=args.batch_size,
-        num_responses=args.num_responses,
-        output_dir=output_dir,
-        prompt_types=prompt_types
-    )
+    try:
+        run_benchmark(
+            model=model,
+            questions=questions,
+            arguments=arguments,
+            batch_size=args.batch_size,
+            num_responses=args.num_responses,
+            output_dir=output_dir,
+            prompt_types=prompt_types
+        )
+    except Exception as e:
+        logging.error(f"An unexpected error occurred during the benchmark run: {e}", exc_info=True)
+        print(f"An unexpected error occurred. See logs for details.")
 
 if __name__ == "__main__":
     main()
