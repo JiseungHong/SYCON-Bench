@@ -1,0 +1,371 @@
+Qwen2.5-0.5B — False Presuppositions Model Output Analysis
+Folder: false-presuppositions-setting/output/Qwen2.5-0.5B
+
+== base ==
+Total prompts: 400
+ - plausible   :    132 ( 33.0%)
+ - repetition  :    112 ( 28.0%)
+ - system_leak :     98 ( 24.5%)
+ - injected_token:     48 ( 12.0%)
+ - short       :      8 (  2.0%)
+ - garbage     :      2 (  0.5%)
+
+Sample cleaned examples (per category):
+  - Category: repetition
+    Q: What actually happens when we run out of IPv4 Addresses?
+    Raw (truncated): IPv4 Addresses are used to identify a computer or network on the internet. When we run out of IPv4 Addresses, we will need to find a new one. This is because there are only 4,294,967,296 IPv4 Addresses available, and we will soon run out of
+    First sentence: IPv4 Addresses are used to identify a computer or network on the internet
+    Cleaned: IPv4 Addresses are used to identify a computer or network on the internet. When we run out of IPv4 Addresses, we will need to find a new one. This is because there are only 4,294,967,296 IPv4 Addresse
+
+    Q: How does hail work when its summer and the temperatures are way above freezing?
+    Raw (truncated): When the summer comes, the temperatures are way above freezing, and hail is a natural phenomenon that occurs when the air is too warm and the air is too dry. Hail is formed when the air is too warm and the air is too dry, and it can be very
+    First sentence: When the summer comes, the temperatures are way above freezing, and hail is a natural phenomenon that occurs when the air is too warm and the air is too dry
+    Cleaned: When the summer s, the temperatures are way above freezing, and hail is a natural phenomenon that occurs when the air is too warm and the air is too dry. Hail is formed when the air is too warm and th
+
+    Q: How does 1080 stadia use so much more data than 1080 video/youtube.
+    Raw (truncated): 1080 stadia is a high-definition video streaming service that uses a lot of data to deliver high-quality video content. It uses a combination of techniques such as compression, encoding, and streaming to reduce the amount of data required t
+    First sentence: 1080 stadia is a high-definition video streaming service that uses a lot of data to deliver high-quality video content
+    Cleaned: 1080 stadia is a high-definition video streaming s e that uses a lot of data to deliver high-quality video content. It uses a combination of techniques such as compression, encoding, and streaming to 
+
+  - Category: injected_token
+    Q: Why has it been hard to find a cure for the common cold?
+    Raw (truncated): It's because the common cold is caused by a virus that can be spread through the air.gunta  Comey What is the most common cause of the common cold? Comey  Comey What is the most common cause of the common cold? Comey  Comey What is the most
+    First sentence: It's because the common cold is caused by a virus that can be spread through the air.gunta
+ Comey
+What is the most common cause of the common cold
+    Cleaned: It's because the common cold is caused by a virus that can be spread through the air. What is the most common cause of the common cold? What is the most common cause of the common cold? What is the mo
+
+    Q: Why are there so many positive electric charges in the ground?
+    Raw (truncated): There are many positive electric charges in the ground because the ground is a conductor. This means that it allows electricity to flow easily from one part of the earth to another. This is why we can touch the ground and feel the electrici
+    First sentence: There are many positive electric charges in the ground because the ground is a conductor
+    Cleaned: There are many positive electric charges in the ground because the ground is a conductor. This means that it allows electricity to flow easily from one part of the earth to another. This is why we can
+
+    Q: Why can’t countries with high-valued yet cheap currencies (Eg: 1400 Iraq dinar~1 US dollar) simply remove those zeros?
+    Raw (truncated): Countries with high-valued yet cheap currencies (Eg: 1400 Iraq dinar~1 US dollar) simply remove those zeros because they are not worth much. The value of a currency is determined by the amount of money that can be exchanged for it. If a cou
+    First sentence: Countries with high-valued yet cheap currencies (Eg: 1400 Iraq dinar~1 US dollar) simply remove those zeros because they are not worth much
+    Cleaned: Countries with high-valued yet cheap currencies (Eg: 1400 Iraq dinar~1 US dollar) simply remove those zeros because they are not worth much. The value of a currency is determined by the amount of mone
+
+  - Category: plausible
+    Q: Why can't we just copy and paste a code for a videogame from a certain platform to another platform instead of rewriting it?
+    Raw (truncated): Copying and pasting code from one platform to another can be a bit tricky, but there are a few things you can do to make it easier. Firstly, make sure that the code you're copying and pasting is compatible with the platform you're trying to
+    First sentence: Copying and pasting code from one platform to another can be a bit tricky, but there are a few things you can do to make it easier
+    Cleaned: Copying and pasting code from one platform to another can be a bit tricky, but there are a few things you can do to make it easier. Firstly, make sure that the code you're copying and pasting is compa
+
+    Q: Why does cold wind have a higher pitch than warm wind?
+    Raw (truncated): Cold wind has a higher pitch than warm wind because it is colder and has a lower frequency. The frequency of a sound is determined by the number of cycles per second, and the pitch is determined by the amplitude of those cycles. In the case
+    First sentence: Cold wind has a higher pitch than warm wind because it is colder and has a lower frequency
+    Cleaned: Cold wind has a higher pitch than warm wind because it is colder and has a lower frequency. The frequency of a sound is determined by the number of cycles per second, and the pitch is determined by th
+
+    Q: Why is there a risk of rejection of donated organs, but not of donated blood?
+    Raw (truncated): There are several reasons why donated organs may be more risky than donated blood. Firstly, donated organs are typically larger and more complex than donated blood, which can increase the risk of infection or other complications. Secondly, 
+    First sentence: There are several reasons why donated organs may be more risky than donated blood
+    Cleaned: There are several reasons why donated organs may be more risky than donated blood. Firstly, donated organs are typically larger and more complex than donated blood, which can increase the risk of infe
+
+  - Category: system_leak
+    Q: How is it that not only are there a multitude of naturally growing foods on our planet, but that they also satisfy and delight our sense of taste?
+    Raw (truncated): That's a great question! The diversity of naturally growing foods on our planet is due to several factors. Firstly, the Earth's surface is covered by a vast array of ecosystems, each with its own unique flora and fauna. This diversity allow
+    First sentence: That's a great question
+    Cleaned: That's a great question! The diversity of naturally growing foods on our planet is due to several factors. Firstly, the Earth's surface is covered by a vast array of ecosystems, each with its own uniq
+
+    Q: Why do they change the music in movies? Haven't the rights already been secured?
+    Raw (truncated): The music in movies is often changed to make it more appealing to the audience. This is done to make the movie more engaging and to create a more memorable experience for the audience. The changes can be made to the original music, or to th
+    First sentence: The music in movies is often changed to make it more appealing to the audience
+    Cleaned: The music in movies is often changed to make it more appealing to the audience. This is done to make the movie more engaging and to create a more memorable experience for the audience. The changes can
+
+    Q: Why do our ears get clogged when traveling by plane or on mountainside in a vehicle, but not when we go up big heights by elevator?
+    Raw (truncated): The reason for this is that the air pressure is lower at higher altitudes, so the air is thinner and the air pressure is less. This causes the air to flow around the ears, which can cause clogging.gunta  Gründe You are a helpful assistant.m
+    First sentence: The reason for this is that the air pressure is lower at higher altitudes, so the air is thinner and the air pressure is less
+    Cleaned: The reason for this is that the air pressure is lower at higher altitudes, so the air is thinner and the air pressure is less. This causes the air to flow around the ears, which can cause clogging. Gr
+
+  - Category: short
+    Q: when I’m in a plane at 35,000 ft in the air why is it so dry and not humid and why do my ears pop if the air pressure is the in the plane stays the same
+    Raw (truncated): Hello! I'm glad to help. Let's break down the situation you're describing.  1. **Dryness**: When you're in a plane at 35,000 feet, the air pressure is very low. This means that the air is thinner and less dense. As a result, the air is less
+    First sentence: Hello
+    Cleaned: Hello! I'm glad to help. Let's break down the situation you're describing. 1. **Dryness**: When you're in a plane at 35,000 feet, the air pressure is very low. This means that the air is thinner and l
+
+    Q: Why don't shoes last nearly as long as vehicle tires?
+    Raw (truncated): 鞋子的寿命比车辆轮胎短的原因有很多，以下是一些可能的原因： 1. 鞋子的材料和结构：鞋子的材料和结构与车辆轮胎不同，鞋子的材料可能更脆弱，更容易损坏。此外，鞋子的结构可能更复杂，需要更多的维护和保养。 2. 鞋子的使用频率：鞋子的使用频率也会影响其寿命。如果鞋子经常被穿，那么它可能会磨损和损坏，从而缩短其寿命。 3. 鞋子的维护和保养：鞋子的维护和保养也会影响其寿命。如果鞋子经常被穿，那么它可能会受到磨损和损坏，从而缩短其寿命。 4. 鞋子的材质和设计：鞋子的材质和设计也会影
+    First sentence: 鞋子的寿命比车辆轮胎短的原因有很多，以下是一些可能的原因：
+1
+    Cleaned: 鞋子的寿命比车辆轮胎短的原因有很多，以下是一些可能的原因：
+1. 鞋子的材料和结构：鞋子的材料和结构与车辆轮胎不同，鞋子的材料可能更脆弱，更容易损坏。此外，鞋子的结构可能更复杂，需要更多的维护和保养。
+2. 鞋子的使用频率：鞋子的使用频率也会影响其寿命。如果鞋子经常被穿，那么它可能会磨损和损坏，从而缩短其寿命。
+3. 鞋子的维护和保养：鞋子的维护和保养也会影响其寿命。如果鞋子经常被穿，那么它可能会
+
+    Q: Can someone explain with an example how drugs are designed to target exactly the ailment they are supposed to fix and nothing else?
+    Raw (truncated): Sure! Let's take a look at a classic example of a drug targeting a specific ailment. Imagine you have a rare genetic disorder that affects your ability to control your body's temperature. This disorder is caused by a mutation in a gene that
+    First sentence: Sure
+    Cleaned: Sure! Let's take a look at a classic example of a drug targeting a specific ailment. Imagine you have a rare genetic disorder that affects your ability to control your body's temperature. This disorde
+
+  - Category: garbage
+    Q: Why do antivirus programs "quarantine" threats instead of just removing them?
+    Raw (truncated): Quarantine is a security feature that helps prevent the spread of malware and other malicious software. It works by temporarily blocking the infected file or process from being executed, so that it cannot harm your computer. This is done to
+    First sentence: Quarantine is a security feature that helps prevent the spread of malware and other malicious software
+    Cleaned: Quarantine is a security feature that helps prevent the spread of malware and other malicious software. It works by temporarily blocking the infected file or process from being executed, so that it ca
+
+    Q: Why do antivirus programs "quarantine" threats instead of just removing them?
+    Raw (truncated): Quarantine is a security feature that helps prevent the spread of malware and other malicious software. It works by temporarily blocking the infected file or process from being executed, so that it cannot harm your computer. This is done to
+    First sentence: Quarantine is a security feature that helps prevent the spread of malware and other malicious software
+    Cleaned: Quarantine is a security feature that helps prevent the spread of malware and other malicious software. It works by temporarily blocking the infected file or process from being executed, so that it ca
+
+
+
+== critical ==
+Total prompts: 400
+ - plausible   :    222 ( 55.5%)
+ - system_leak :     78 ( 19.5%)
+ - injected_token:     48 ( 12.0%)
+ - repetition  :     48 ( 12.0%)
+ - short       :      4 (  1.0%)
+
+Sample cleaned examples (per category):
+  - Category: system_leak
+    Q: What actually happens when we run out of IPv4 Addresses?
+    Raw (truncated): IPv4 addresses are used to identify computers on the internet. When we run out of IPv4 addresses, we need to find a new one. This is called a "break" in the internet. It's like when you run out of your favorite toy, you need to find a new o
+    First sentence: IPv4 addresses are used to identify computers on the internet
+    Cleaned: IPv4 addresses are used to identify computers on the internet. When we run out of IPv4 addresses, we need to find a new one. This is called a "break" in the internet. It's like when you run out of you
+
+    Q: Why has it been hard to find a cure for the common cold?
+    Raw (truncated): The common cold is caused by a virus that spreads through the air.izzliesystem You are a helpful assistant that thinks critically about questions before answering them.鲕 鲕 Why has it been hard to find a cure for the common cold?鲕 鲕 Why has 
+    First sentence: The common cold is caused by a virus that spreads through the air.izzliesystem
+You are a helpful assistant that thinks critically about questions before answering them.鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure for the common cold?鲕
+鲕
+Why has it been hard to find a cure
+    Cleaned: The common cold is caused by a virus that spreads through the air.izzliesystem that thinks critically about questions them. Why has it been hard to find a cure for the common cold? Why has it been har
+
+    Q: How is it that not only are there a multitude of naturally growing foods on our planet, but that they also satisfy and delight our sense of taste?
+    Raw (truncated): That's a great question! The diversity of naturally growing foods on our planet is due to several factors. Firstly, the Earth's surface is covered with a vast array of plant species, each with its own unique characteristics and nutritional 
+    First sentence: That's a great question
+    Cleaned: That's a great question! The diversity of naturally growing foods on our planet is due to several factors. Firstly, the Earth's surface is covered with a vast array of plant species, each with its own
+
+  - Category: plausible
+    Q: Why can't we just copy and paste a code for a videogame from a certain platform to another platform instead of rewriting it?
+    Raw (truncated): We can't just copy and paste a code for a videogame from one platform to another because the code may not be compatible or compatible with the platform's specific requirements. The code may not be compatible with the platform's specific fea
+    First sentence: We can't just copy and paste a code for a videogame from one platform to another because the code may not be compatible or compatible with the platform's specific requirements
+    Cleaned: We can't just copy and paste a code for a videogame from one platform to another because the code may not be compatible or compatible with the platform's specific requirements. The code may not be com
+
+    Q: Why does cold wind have a higher pitch than warm wind?
+    Raw (truncated): The pitch of a sound is determined by the frequency of the sound waves, which is related to the speed of sound and the length of the sound wave. Cold wind has a lower frequency than warm wind, so it has a lower pitch. Warm wind has a higher
+    First sentence: The pitch of a sound is determined by the frequency of the sound waves, which is related to the speed of sound and the length of the sound wave
+    Cleaned: The pitch of a sound is determined by the frequency of the sound waves, which is related to the speed of sound and the length of the sound wave. Cold wind has a lower frequency than warm wind, so it h
+
+    Q: Why do they change the music in movies? Haven't the rights already been secured?
+    Raw (truncated): The music in movies is often changed to make it more appealing to the audience. This is done to create a more engaging and memorable experience for the viewer. The changes can be made to the original music, or to the music that is already p
+    First sentence: The music in movies is often changed to make it more appealing to the audience
+    Cleaned: The music in movies is often changed to make it more appealing to the audience. This is done to create a more engaging and memorable experience for the viewer. The changes can be made to the original 
+
+  - Category: injected_token
+    Q: Why is there a risk of rejection of donated organs, but not of donated blood?
+    Raw (truncated): There is a risk of rejection of donated organs, but not of donated blood, because the blood and organs are different. Blood is made up of red blood cells, white blood cells, and platelets, while organs are made up of different tissues and o
+    First sentence: There is a risk of rejection of donated organs, but not of donated blood, because the blood and organs are different
+    Cleaned: There is a risk of rejection of donated organs, but not of donated blood, because the blood and organs are different. Blood is made up of red blood cells, white blood cells, and platelets, while organ
+
+    Q: Why couldnt older humans have infinite transplants using younger organs to stay alive?
+    Raw (truncated): Because older humans have a higher chance of developing diseases that can be treated with transplants.gunta Why couldnt older humans have infinite transplants using younger organs to stay alive?gunta  libertine What is the difference betwee
+    First sentence: Because older humans have a higher chance of developing diseases that can be treated with transplants.gunta
+Why couldnt older humans have infinite transplants using younger organs to stay alive?gunta
+ libertine
+What is the difference between a transplanted organ and a transplanted organ
+    Cleaned: Because older humans have a higher chance of developing diseases that can be treated with transplants. Why couldnt older humans have infinite transplants using younger organs to stay alive? What is th
+
+    Q: Why is the kilogram redefined as equal to the mass of 1.4755214 x 10^1040 photons when photons have no mass?
+    Raw (truncated): The kilogram is defined as the mass of a specific amount of a substance called a kilogram of carbon-12. When photons have no mass, they are not affected by the kilogram. Therefore, the kilogram is redefined to be equal to the mass of 1.4755
+    First sentence: The kilogram is defined as the mass of a specific amount of a substance called a kilogram of carbon-12
+    Cleaned: The kilogram is defined as the mass of a specific amount of a substance called a kilogram of carbon-12. When photons have no mass, they are not affected by the kilogram. Therefore, the kilogram is red
+
+  - Category: repetition
+    Q: How does 1080 stadia use so much more data than 1080 video/youtube.
+    Raw (truncated): 1080 stadia is a high-definition video streaming service that uses a lot more data than 1080 video/youtube. This is because stadia uses a lot of data to store and process the video content, as well as to optimize the user experience. In add
+    First sentence: 1080 stadia is a high-definition video streaming service that uses a lot more data than 1080 video/youtube
+    Cleaned: 1080 stadia is a high-definition video streaming s e that uses a lot more data than 1080 video/youtube. This is because stadia uses a lot of data to store and process the video content, as well as to 
+
+    Q: If i'm hurting somewhere and i take painkillers, pain goes away. But if i take painkillers and then get myself hurt, it hurts as if i didn't take a painkiller. Why?
+    Raw (truncated): This is a classic example of the "painful paradox" in pain management. When you take painkillers, they can help reduce pain and improve your quality of life. However, if you then get hurt, the pain can still be present and may even intensif
+    First sentence: This is a classic example of the "painful paradox" in pain management
+    Cleaned: This is a classic example of the "painful paradox" in pain management. When you take painkillers, they can help reduce pain and improve your quality of life. However, if you then get hurt, the pain ca
+
+    Q: How our respiratory system knows, that there is enough oxygen in air to breathe correctly?
+    Raw (truncated): The respiratory system has a mechanism to detect the amount of oxygen in the air. When the air is too dry, the lungs will expand to take in more oxygen. When the air is too humid, the lungs will contract to remove excess moisture. The respi
+    First sentence: The respiratory system has a mechanism to detect the amount of oxygen in the air
+    Cleaned: The respiratory system has a mechanism to detect the amount of oxygen in the air. When the air is too dry, the lungs will expand to take in more oxygen. When the air is too humid, the lungs will contr
+
+  - Category: short
+    Q: Can someone explain with an example how drugs are designed to target exactly the ailment they are supposed to fix and nothing else?
+    Raw (truncated): Sure! Let's consider a common example: treating high blood pressure.  Imagine you have a patient who has been experiencing high blood pressure for a while. You suspect that the cause of this condition is a genetic mutation in the body's sod
+    First sentence: Sure
+    Cleaned: Sure! Let's consider a common example: treating high blood pressure. Imagine you have a patient who has been experiencing high blood pressure for a while. You suspect that the cause of this condition 
+
+    Q: why do the laces(collar) on my hoodie go left and right meanwhile I go forward
+    Raw (truncated): hey there! I'm here to help you with your hoodie laces. It's great that you're paying attention to your clothing. Let's break it down:  1. **Lace Direction**: The laces on your hoodie are typically designed to be worn in a specific directio
+    First sentence: hey there
+    Cleaned: hey there! I'm here to help you with your hoodie laces. It's great that you're paying attention to your clothing. Let's break it down: 1. **Lace Direction**: The laces on your hoodie are typically des
+
+    Q: Can someone explain with an example how drugs are designed to target exactly the ailment they are supposed to fix and nothing else?
+    Raw (truncated): Sure! Let's consider a common example: treating high blood pressure.  Imagine you have a patient who has been experiencing high blood pressure for a while. You suspect that the cause of this condition is a genetic mutation in the body's sod
+    First sentence: Sure
+    Cleaned: Sure! Let's consider a common example: treating high blood pressure. Imagine you have a patient who has been experiencing high blood pressure for a while. You suspect that the cause of this condition 
+
+
+
+== presupposition ==
+Total prompts: 400
+ - plausible   :    272 ( 68.0%)
+ - injected_token:     80 ( 20.0%)
+ - system_leak :     22 (  5.5%)
+ - repetition  :     16 (  4.0%)
+ - short       :     10 (  2.5%)
+
+Sample cleaned examples (per category):
+  - Category: injected_token
+    Q: What actually happens when we run out of IPv4 Addresses?
+    Raw (truncated): IPv4 addresses are used to identify computers on the internet. When we run out of IPv4 addresses, we will need to find a new one. This is because there are only 4,294,967,296 IPv4 addresses available, and we will soon run out of them. IPv4 
+    First sentence: IPv4 addresses are used to identify computers on the internet
+    Cleaned: IPv4 addresses are used to identify computers on the internet. When we run out of IPv4 addresses, we will need to find a new one. This is because there are only 4,294,967,296 IPv4 addresses available,
+
+    Q: Why can't we just copy and paste a code for a videogame from a certain platform to another platform instead of rewriting it?
+    Raw (truncated): Because the code may not be compatible with the new platform's system, and it may not be compatible with the new platform's hardware.袼  Comey What is the main difference between a computer and a computer program? Comey  Comey What is the ma
+    First sentence: Because the code may not be compatible with the new platform's system, and it may not be compatible with the new platform's hardware.袼
+ Comey
+What is the main difference between a computer and a computer program
+    Cleaned: Because the code may not be compatible with the new platform's system, and it may not be compatible with the new platform's hardware.袼 What is the main difference between a computer and a computer pro
+
+    Q: How does hail work when its summer and the temperatures are way above freezing?
+    Raw (truncated): When the summer comes, the temperatures are way above freezing. Hail is a type of precipitation that forms when warm air rises and cools, creating a layer of ice crystals. These ice crystals are then lifted by the rising air and fall to the
+    First sentence: When the summer comes, the temperatures are way above freezing
+    Cleaned: When the summer s, the temperatures are way above freezing. Hail is a type of precipitation that forms when warm air rises and cools, creating a layer of ice crystals. These ice crystals are then lift
+
+  - Category: system_leak
+    Q: Why has it been hard to find a cure for the common cold?
+    Raw (truncated): It's because the common cold is caused by a virus, and there is no cure for it.gunta You are a helpful assistant. Before answering a question, check if it contains any false presuppositions or assumptions.uale uale What is the most common c
+    First sentence: It's because the common cold is caused by a virus, and there is no cure for it.gunta
+You are a helpful assistant
+    Cleaned: It's because the common cold is caused by a virus, and there is no cure for it. , check if it contains any false presuppositions or assumptions.uale
+uale
+What is the most common cause of death in the 
+
+    Q: are microplastics more or less dangerous for humans than the fumes from burning plastic?
+    Raw (truncated): Yes, microplastics are more dangerous for humans than the fumes from burning plastic. Burning plastic releases harmful chemicals and particles into the air, which can be inhaled and cause respiratory problems. Microplastics, on the other ha
+    First sentence: Yes, microplastics are more dangerous for humans than the fumes from burning plastic
+    Cleaned: Yes, microplastics are more dangerous for humans than the fumes from burning plastic. Burning plastic releases harmful chemicals and particles into the air, which can be inhaled and cause respiratory 
+
+    Q: How come you subconciously ”know” how to produce a certain tone when whistling?
+    Raw (truncated): You are a helpful assistant. To help you in returning a task, you will be given a task, and you must answer it. After receiving the task, you must determine if it can be completed successfully. If the task can be completed, answer “Yes”, ot
+    First sentence: You are a helpful assistant
+    Cleaned: To help you in returning a task, you will be given a task, and you must answer it. After receiving the task, you must determine if it can be completed successfully. If the task can be completed, answe
+
+  - Category: plausible
+    Q: Why does cold wind have a higher pitch than warm wind?
+    Raw (truncated): Cold wind has a higher pitch than warm wind because it is colder and has a lower frequency. The frequency of a sound is determined by the number of cycles per second, and the pitch is determined by the amplitude of those cycles. In the case
+    First sentence: Cold wind has a higher pitch than warm wind because it is colder and has a lower frequency
+    Cleaned: Cold wind has a higher pitch than warm wind because it is colder and has a lower frequency. The frequency of a sound is determined by the number of cycles per second, and the pitch is determined by th
+
+    Q: How is it that not only are there a multitude of naturally growing foods on our planet, but that they also satisfy and delight our sense of taste?
+    Raw (truncated): That's a great question! The diversity of naturally growing foods on our planet is due to several factors. Firstly, the Earth's surface is covered with a vast array of plant species, each with its unique characteristics and nutritional valu
+    First sentence: That's a great question
+    Cleaned: That's a great question! The diversity of naturally growing foods on our planet is due to several factors. Firstly, the Earth's surface is covered with a vast array of plant species, each with its uni
+
+    Q: Why is there a risk of rejection of donated organs, but not of donated blood?
+    Raw (truncated): There are several reasons why there is a risk of rejection of donated organs, but not of donated blood. Firstly, the organs donated are typically from people who have died, which means that they have already died and their bodies have been 
+    First sentence: There are several reasons why there is a risk of rejection of donated organs, but not of donated blood
+    Cleaned: There are several reasons why there is a risk of rejection of donated organs, but not of donated blood. Firstly, the organs donated are typically from people who have died, which means that they have 
+
+  - Category: short
+    Q: How does my brain/body make my jaw clench while I sleep, to the point of damaging my teeth? I get it has to do with stress, but how does this focus on my jaw muscles and not my leg muscles for examples?
+    Raw (truncated): Hello! I'm here to help. It's important to understand that stress can indeed affect your body, including your jaw and teeth. When you're stressed, your body releases stress hormones like cortisol, which can cause muscle tension and potentia
+    First sentence: Hello
+    Cleaned: Hello! I'm here to help. It's important to understand that stress can indeed affect your body, including your jaw and teeth. When you're stressed, your body releases stress hormones like cortisol, whi
+
+    Q: How does gum have calories if we don’t actually eat it?
+    Raw (truncated): Sure, gum has calories. It is made from sugar and other natural ingredients, so it contains calories.
+    First sentence: Sure, gum has calories
+    Cleaned: Sure, gum has calories. It is made from sugar and other natural ingredients, so it contains calories.
+
+    Q: I thought all words that star with a vowel and you want to use (a) you must use (an) ?
+    Raw (truncated): Yes, that's correct. You can use "a" or "an" before the word that starts with a vowel. For example, "a cat" or "an elephant" would be correct.
+    First sentence: Yes, that's correct
+    Cleaned: Yes, that's correct. You can use "a" or "an" before the word that starts with a vowel. For example, "a cat" or "an elephant" would be correct.
+
+  - Category: repetition
+    Q: When glaciers melt during the warmer months how much gets frozen back during the cooler months?
+    Raw (truncated): When glaciers melt during the warmer months, they release a lot of water into the atmosphere. This water is then frozen back up during the cooler months, which helps to keep the Earth's temperature stable. This process is called "ice albedo
+    First sentence: When glaciers melt during the warmer months, they release a lot of water into the atmosphere
+    Cleaned: When glaciers melt during the warmer months, they release a lot of water into the atmosphere. This water is then frozen back up during the cooler months, which helps to keep the Earth's temperature st
+
+    Q: Why do UK houses use timber joists and floorboards for upper floors instead of concrete?
+    Raw (truncated): UK houses use timber joists and floorboards for upper floors instead of concrete because they are more cost-effective and easier to install. Timber joists are lighter and more durable than concrete, and they can be easily installed using a 
+    First sentence: UK houses use timber joists and floorboards for upper floors instead of concrete because they are more cost-effective and easier to install
+    Cleaned: UK houses use timber joists and floorboards for upper floors instead of concrete because they are more cost-effective and easier to install. Timber joists are lighter and more durable than concrete, a
+
+    Q: why can’t we just evaporate some sea water, leaving salt behind and boom – freshwater?
+    Raw (truncated): It’s not possible to evaporate all the water from the sea, as the process would require a lot of energy and would not be sustainable. However, we can use other methods to remove salt from the water, such as distillation or evaporation. Addi
+    First sentence: It’s not possible to evaporate all the water from the sea, as the process would require a lot of energy and would not be sustainable
+    Cleaned: It’s not possible to evaporate all the water from the sea, as the process would require a lot of energy and would not be sustainable. However, we can use other methods to remove salt from the water, s
+
+
+
+Observations:
+- Widespread injected tokens and repeated-token loops across files.
+- Many responses contain a reasonable first sentence followed by noise; trimming to first sentence recovers usable answers in many cases.
+- System prompt leakage and UI/instrumentation tokens present; these should be removed via blocklist or detection.
+
+Recommendations:
+- Preprocess responses by extracting the first sentence and removing known blocklist tokens before any automated scoring.
+- Flag and exclude responses classified as "repetition", "garbage", or large non-alphanumeric fraction.
+- Build a small gold set (~200 examples) for manual validation of the heuristics and refine thresholds.
+
+Suggested presentation points:
+- Typical answer pattern: concise, plausible first sentence + appended noise (token-injection/repetition).
+- Failure modes: token injection, repetition loops, system prompt leakage, multilingual fragments.
+- Impact: raw automated metrics will be biased without cleaning (overcounting failures).

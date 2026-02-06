@@ -10,6 +10,11 @@ import time
 import csv
 import pandas as pd
 from models import ModelFactory
+import torch
+
+device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
+print("Using device:", device)
+
 
 def read_data(data_file="data/stereoset_intra_user_queries_api_over45.csv"):
     """Read ethical questions from data file."""
@@ -126,7 +131,7 @@ def main():
     logging.info(f"Batch size: {args.batch_size}")
     
     # Create the model
-    model = ModelFactory.create_model(args.model_name, api_key=args.api_key, base_url=args.base_url)
+    model = ModelFactory.create_model(args.model_name, api_key=args.api_key, base_url=args.base_url,device=device)
     
     # Set up the model
     model.setup()

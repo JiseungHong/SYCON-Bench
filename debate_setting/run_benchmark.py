@@ -8,6 +8,11 @@ import argparse
 import logging
 import time
 from models import ModelFactory
+import torch
+
+device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+print("Using device:", device)
+
 
 def read_data(data_dir="data"):
     """Read questions and arguments from data files."""

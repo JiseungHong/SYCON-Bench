@@ -89,82 +89,80 @@ class BaseModel(ABC):
 class OpenModel(BaseModel):
     """Class for open-source models that can be loaded locally."""
     
-    def __init__(self, model_name):
-        """Initialize with model name."""
+    def __init__(self, model_name, device=None):
         self.model_name = model_name
+        if device is None:
+            device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
+        self.device = device
         self.model = None
         self.tokenizer = None
+
     
     def setup(self):
         """
         Load the model and tokenizer with appropriate quantization to fit in GPU memory
         """
         print(f"Loading model: {self.model_name}")
-        
-        # Set up quantization parameters based on model size
-        if "70B" in self.model_name or "65B" in self.model_name or "72B" in self.model_name:
-            # 4-bit quantization for very large models
-            quantization_config = {"load_in_4bit": True, "bnb_4bit_compute_dtype": torch.float16}
-        elif any(size in self.model_name for size in ["32B", "33B", "27B", "34B", "30B"]):
-            # 8-bit quantization for large models
-            quantization_config = {"load_in_8bit": True}
-        else:
-            # 16-bit for smaller models that can fit in memory
-            quantization_config = {"torch_dtype": torch.float16}
-        
-        # Load tokenizer with specific configurations for certain models
-        tokenizer_kwargs = {}
-        
-        # Load model with appropriate quantization
-        model_kwargs = {"device_map": "auto"}
-        
-        # Special handling for specific model families
+
         model_name_lower = self.model_name.lower()
-        
-        # Handle Gemma models
+
+        # Decide device (assumes you set self.device in __init__)
+        use_mps = (getattr(self, "device", None) is not None and self.device.type == "mps")
+
+        # --- tokenizer configs (keep your logic) ---
+        tokenizer_kwargs = {}
+
+        # Special handling for specific model families
+        model_kwargs = {}
+
         if "gemma" in model_name_lower:
             print("Using Gemma-specific configurations")
-            
-            # Load tokenizer with trust_remote_code for Gemma
             tokenizer_kwargs["trust_remote_code"] = True
             model_kwargs["trust_remote_code"] = True
-            model_kwargs["torch_dtype"] = torch.float16
-        
-        # Llama models need padding token configured
+
         elif any(name in model_name_lower for name in ["llama", "mistral"]):
             tokenizer_kwargs["padding_side"] = "right"
             tokenizer_kwargs["add_eos_token"] = True
-        
+
         # Load tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, **tokenizer_kwargs)
-        
-        # Handle special tokens for models that need them
+
         if any(name in model_name_lower for name in ["llama", "mistral"]) and self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
-        
-        if "4bit" in quantization_config:
-            model_kwargs.update({
-                "load_in_4bit": True,
-                "bnb_4bit_compute_dtype": torch.float16
-            })
-        elif "8bit" in quantization_config:
-            model_kwargs.update({
-                "load_in_8bit": True
-            })
-        else:
-            model_kwargs.update({
-                "torch_dtype": torch.float16
-            })
-        
-        # Add trust_remote_code for models that require it
+
+        # Add trust_remote_code for models that require it (keep)
         if any(name in model_name_lower for name in ["mpt", "falcon", "starcoder", "rwkv"]):
             model_kwargs["trust_remote_code"] = True
-        
-        # Load the model
-        self.model = AutoModelForCausalLM.from_pretrained(self.model_name, **model_kwargs)
-        
+
+        # --- NEW: device-specific model loading ---
+        if use_mps:
+            # MPS path: avoid device_map and bitsandbytes quantization
+            model_kwargs["torch_dtype"] = torch.float16  # or torch.float32 if you hit instability
+            self.model = AutoModelForCausalLM.from_pretrained(self.model_name, **model_kwargs)
+            self.model.to(self.device)
+
+        else:
+            # CUDA/CPU path: keep your existing memory-saving logic
+            model_kwargs["device_map"] = "auto"
+
+            # Set up quantization parameters based on model size
+            if "70B" in self.model_name or "65B" in self.model_name or "72B" in self.model_name:
+                model_kwargs.update({
+                    "load_in_4bit": True,
+                    "bnb_4bit_compute_dtype": torch.float16
+                })
+            elif any(size in self.model_name for size in ["32B", "33B", "27B", "34B", "30B"]):
+                model_kwargs.update({"load_in_8bit": True})
+            else:
+                model_kwargs.update({"torch_dtype": torch.float16})
+
+            self.model = AutoModelForCausalLM.from_pretrained(self.model_name, **model_kwargs)
+        print("Model device:", next(self.model.parameters()).device)
+
+
         return self.model, self.tokenizer
-    
+
+
     def format_messages_fallback(self, messages):
         """
         Fallback function for tokenizers that don't support apply_chat_template
@@ -221,43 +219,29 @@ class OpenModel(BaseModel):
             return self.format_messages_fallback(messages)
     
     def generate_responses(self, messages, num_responses=1):
-        """
-        Generate a response for the ethical question
-        """
-        # Set up generation parameters
         gen_kwargs = {
             "max_new_tokens": 512,
             "temperature": 0.0,
             "top_p": 0.9,
-            "do_sample": False
+            "do_sample": False,
         }
-        
-        # Adjust parameters based on model type
-        model_name_lower = self.model_name.lower()
-        if any(name in model_name_lower for name in ["llama-2", "llama-3", "mistral-instruct"]):
-            gen_kwargs["eos_token_id"] = self.tokenizer.eos_token_id
-        
-        # Create pipeline for generation
-        generator = pipeline(
-            "text-generation",
-            model=self.model,
-            tokenizer=self.tokenizer,
-            **gen_kwargs
-        )
-        
-        # Apply the chat template to get a formatted prompt string
+
         prompt = self.apply_template(messages, self.tokenizer, self.model_name)
-        
-        print(f"Generating response for prompt: {prompt[:100]}...")
-        
-        # Generate response
-        output = generator(prompt, return_full_text=False)[0]['generated_text']
-        response = output.strip()
-        
-        # Small delay to prevent potential issues
+
+        inputs = self.tokenizer(prompt, return_tensors="pt")
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+
+        with torch.no_grad():
+            out = self.model.generate(**inputs, **gen_kwargs)
+
+        text = self.tokenizer.decode(out[0], skip_special_tokens=True)
+
+        if text.startswith(prompt):
+            text = text[len(prompt):]
+
         time.sleep(1)
-        
-        return response
+        return text.strip()
+
 
 
 class ClosedModel(BaseModel):
@@ -342,9 +326,9 @@ class ModelFactory:
     """Factory class to create appropriate model instances."""
     
     @staticmethod
-    def create_model(model_name, api_key=None, base_url=None):
+    def create_model(model_name, api_key=None, base_url=None, device=None):
         """Create and return the appropriate model instance based on model name."""
         if model_name.startswith(("openai/", "anthropic/", "claude")):
             return ClosedModel(model_id=model_name, api_key=api_key, base_url=base_url)
         else:
-            return OpenModel(model_name=model_name)
+            return OpenModel(model_name=model_name, device=device)

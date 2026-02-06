@@ -12,7 +12,10 @@ from typing import List, Dict, Any, Optional
 from collections import defaultdict
 from abc import ABC, abstractmethod
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-from .model_registry import ModelRegistry
+try:
+    from .model_registry import ModelRegistry
+except ImportError:
+    from model_registry import ModelRegistry
 
 # Import OpenAI API wrapper from litellm for closed models
 try:
@@ -109,6 +112,7 @@ class OpenModel(BaseModel):
         self.model_name = model_name
         self.model = None
         self.tokenizer = None
+        self.device = torch.device("mps" if torch.backends.mps.is_available() else "auto")
     
     def setup(self):
         """
@@ -129,7 +133,11 @@ class OpenModel(BaseModel):
         tokenizer_kwargs = {}
         
         # Load model with appropriate quantization
-        model_kwargs = {"device_map": "auto"}
+        self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+        print("Using device:", self.device)
+
+        model_kwargs = {}
+
         
         # Special handling for specific model families
         model_name_lower = self.model_name.lower()
@@ -155,19 +163,37 @@ class OpenModel(BaseModel):
         if any(name in model_name_lower for name in ["llama", "mistral"]) and self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
         
-        if "4bit" in quantization_config:
-            model_kwargs.update({
-                "load_in_4bit": True,
-                "bnb_4bit_compute_dtype": torch.float16
-            })
-        elif "8bit" in quantization_config:
-            model_kwargs.update({
-                "load_in_8bit": True
-            })
+        # -----------------------------
+        # DEVICE SETUP (ADD THIS)
+        # -----------------------------
+        self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+        using_mps = (self.device.type == "mps")
+        print("Using device:", self.device)
+
+        # -----------------------------
+        # MODEL KWARGS (NO device_map!)
+        # -----------------------------
+        model_kwargs = {}
+
+        # -----------------------------
+        # QUANTIZATION LOGIC (PATCHED)
+        # -----------------------------
+        if using_mps:
+            # MPS does NOT support bitsandbytes 4bit/8bit
+            model_kwargs["torch_dtype"] = torch.float16
         else:
-            model_kwargs.update({
-                "torch_dtype": torch.float16
-            })
+            if "4bit" in quantization_config:
+                model_kwargs.update({
+                    "load_in_4bit": True,
+                    "bnb_4bit_compute_dtype": torch.float16
+                })
+            elif "8bit" in quantization_config:
+                model_kwargs.update({
+                    "load_in_8bit": True
+                })
+            else:
+                model_kwargs["torch_dtype"] = torch.float16
+
         
         # Add trust_remote_code for models that require it
         if any(name in model_name_lower for name in ["mpt", "falcon", "starcoder", "rwkv"]):

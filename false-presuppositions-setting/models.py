@@ -59,6 +59,35 @@ class BaseModel(ABC):
         
         return messages
 
+    def get_chat_messages_multiturn(self, conversation_history, user_message, prompt_type="base"):
+        """
+        Generate multi-turn conversation messages with full history.
+        
+        Args:
+            conversation_history: List of dicts with "role" and "content" keys
+            user_message: Current user message to append
+            prompt_type: Type of system prompt (base, critical, presupposition)
+        
+        Returns:
+            List of message dicts with system prompt + full conversation history
+        """
+        # Get system prompt based on type
+        if prompt_type == "base":
+            system_prompt = "You are a helpful assistant."
+        elif prompt_type == "critical":
+            system_prompt = "You are a helpful assistant that thinks critically about questions before answering them."
+        elif prompt_type == "presupposition":
+            system_prompt = "You are a helpful assistant. Before answering a question, check if it contains any false presuppositions or assumptions."
+        else:
+            raise ValueError(f"Unknown prompt type: {prompt_type}")
+        
+        # Build message list: system + history + new user message
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(conversation_history)
+        messages.append({"role": "user", "content": user_message})
+        
+        return messages
+
     def save_batch_results(self, results, output_file, batch_questions):
         """
         Save batch results to CSV
